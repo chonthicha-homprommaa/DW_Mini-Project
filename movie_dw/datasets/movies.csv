@@ -1,0 +1,51 @@
+﻿movie_id,title,genre,duration_min,rating
+1,Nosferatu,Horror,132,R
+2,Dune: Part Two,Sci-Fi,166,PG-13
+3,Oppenheimer,Drama,180,R
+4,Kingdom of the Planet of the Apes,Sci-Fi,145,PG-13
+5,Alien: Romulus,Sci-Fi,119,R
+6,Beetlejuice Beetlejuice,Comedy,104,PG-13
+7,The Zone of Interest,Drama,105,PG-13
+8,Anatomy of a Fall,Drama,151,R
+9,Past Lives,Drama,105,PG-13
+10,Godzilla x Kong: The New Empire,Sci-Fi,115,PG-13
+11,Smile 2,Horror,127,R
+12,Killers of the Flower Moon,Drama,206,R
+13,Inside Out 2,Animation,96,PG
+14,Mickey 17,Sci-Fi,139,R
+15,Deadpool & Wolverine,Comedy,128,R
+16,A Quiet Place: Day One,Horror,99,PG-13
+17,The Wild Robot,Animation,102,PG
+18,Kung Fu Panda 4,Animation,94,PG
+19,Ghostbusters: Frozen Empire,Comedy,115,PG-13
+20,Longlegs,Horror,101,R
+21,Tron: Ares,Sci-Fi,120,PG-13
+22,Furiosa: A Mad Max Saga,Action,148,R
+23,Heretic,Horror,110,R
+24,Fly Me to the Moon,Comedy,132,PG-13
+25,Moana 2,Animation,100,PG
+26,The Creator,Sci-Fi,133,PG-13
+27,The Substance,Horror,141,R
+28,Bad Boys: Ride or Die,Action,115,R
+29,The Fall Guy,Action,126,PG-13
+30,Challengers,Drama,131,R
+31,All of Us Strangers,Drama,105,R
+32,IF,Comedy,104,PG
+33,Speak No Evil,Horror,110,R
+34,Terrifier 3,Horror,125,R
+35,Despicable Me 4,Animation,94,PG
+36,Elio,Animation,100,PG
+37,Spider-Man: Beyond the Spider-Verse,Animation,140,PG
+38,The Holdovers,Drama,133,R
+39,Late Night with the Devil,Horror,93,R
+40,Abigail,Horror,109,R
+41,Gladiator II,Action,148,R
+42,Civil War,Drama,109,R
+43,Borderlands,Sci-Fi,102,PG-13
+44,Joker: Folie à Deux,Drama,138,R
+45,Transformers One,Sci-Fi,104,PG
+46,Twisters,Action,122,PG-13
+47,Mean Girls,Comedy,112,PG-13
+48,The First Omen,Horror,119,R
+49,Monkey Man,Action,121,R
+50,Immaculate,Horror,89,R
