@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: movie
+    schema: main
+    tables:
+      - name: customers
+      - name: movies
+      - name: showtimes
+      - name: concession_sales
+      - name: ticket_sales_5000

@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: dim_customers
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_movies
+    columns:
+      - name: movie_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_showtimes
+    columns:
+      - name: showtime_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fact_ticket_sales
+    columns:
+      - name: ticket_sale_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+      - name: movie_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_movies')
+                field: movie_id
+
+  - name: fact_concession_sales
+    columns:
+      - name: concession_sale_id
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
