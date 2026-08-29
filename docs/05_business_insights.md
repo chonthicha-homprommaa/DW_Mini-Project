@@ -8,5 +8,4 @@
 1. **Top Performing Movies:** ภาพยนตร์ทำรายได้สูงสุดคือ *Speak No Evil*, *Twisters*, *IF*, และ *Civil War*
 2. **Lowest Performing Movies:** ภาพยนตร์ทำรายได้น้อยที่สุดคือ *Mickey 17*, *Gladiator III*, และ *The Substance*
 3. **Recommendation:** ควรเพิ่มรอบฉายให้กลุ่มภาพยนตร์ที่ทำยอดขายได้สูงกว่า $50,000 เพื่อสร้างกำไรสูงสุด
-![Uploading สกรีนช็อต 2026-08-29 234623.png…]()
-
+![Movie DW Sales Dashboard](สกรีนช็อต%202026-08-29%20234623.png)
