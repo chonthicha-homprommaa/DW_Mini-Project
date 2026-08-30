@@ -49,6 +49,7 @@ def load_data():
             fact_table = resolve_table_name(tables, ["fact_ticket", "fact_sales", "fact", "ticket_sales"])
             dim_movies = resolve_table_name(tables, ["dim_movie", "movie"])
             dim_showtime = resolve_table_name(tables, ["dim_showtime", "showtime"])
+            dim_date = resolve_table_name(tables, ["dim_date", "date"])
 
             if fact_table:
                 df = con.execute(f"SELECT * FROM main.{fact_table}").fetchdf()
@@ -69,16 +70,24 @@ def load_data():
                     except Exception:
                         pass
 
-                # 2. JOIN กับ dim_showtime เพื่อเอาวันที่และเวลาฉายจริง
+                # 2. JOIN กับ dim_date เพื่อดึงวันที่จริงจาก Date Dimension
+                if dim_date and "date_id" in df.columns:
+                    try:
+                        date_df = con.execute(f"SELECT * FROM main.{dim_date}").fetchdf()
+                        date_df.columns = [c.lower() for c in date_df.columns]
+                        df = df.merge(date_df, on="date_id", how="left")
+                    except Exception:
+                        pass
+
+                # 3. JOIN กับ dim_showtime เพื่อเอาเวลาฉายและ time_slot
                 if dim_showtime and "showtime_id" in df.columns:
                     try:
                         st_df = con.execute(f"SELECT * FROM main.{dim_showtime}").fetchdf()
                         st_df.columns = [c.lower() for c in st_df.columns]
-                        # หาคอลัมน์ที่เป็นวันที่/เวลาฉาย
-                        st_date_col = [c for c in st_df.columns if "date" in c or "time" in c or "start" in c]
+                        st_date_col = [c for c in st_df.columns if "date" in c or "start" in c]
                         if st_date_col:
                             st_df = st_df.rename(columns={st_date_col[0]: "showtime_date"})
-                            df = df.merge(st_df, on="showtime_id", how="left")
+                        df = df.merge(st_df, on="showtime_id", how="left")
                     except Exception:
                         pass
 
@@ -93,18 +102,23 @@ def enrich_dimensions(df):
     # 1. ค้นหาราคา Revenue
     rev_col = None
     for c in df.columns:
-        if any(k in c.lower() for k in ["revenue", "price", "amount", "total"]):
+        if any(k in c.lower() for k in ["final_price", "total_price", "revenue", "amount", "price"]):
             rev_col = c
             break
 
     df["revenue"] = pd.to_numeric(df[rev_col], errors="coerce").fillna(0.0) if rev_col else 0.0
 
-    # 2. จัดการ วันที่ (ใช้วันที่รอบฉาย หรือ วันที่สร้างข้อมูล)
+    # 2. ค้นหาวันที่จริง
     date_col = None
-    for candidate in ["showtime_date", "show_date", "start_time", "sale_date", "insertion_timestamp", "order_date"]:
+    priority_candidates = ["full_date", "date", "show_date", "showtime_date", "start_time", "sale_date", "order_date"]
+    
+    for candidate in priority_candidates:
         if candidate in df.columns and df[candidate].notna().any():
             date_col = candidate
             break
+
+    if not date_col and "insertion_timestamp" in df.columns:
+        date_col = "insertion_timestamp"
 
     if date_col:
         df["order_date"] = pd.to_datetime(df[date_col], errors="coerce")
@@ -119,6 +133,16 @@ def enrich_dimensions(df):
     df["day_type"] = (df["order_date"].dt.weekday < 5).map({True: "Weekday", False: "Weekend"})
     df["date_label"] = df["order_date"].dt.strftime("%Y-%m-%d")
 
+    # ถ้าไม่มีคอลัมน์ time_slot ให้คำนวณจากชั่วโมงของ order_date
+    if "time_slot" not in df.columns:
+        hours = df["order_date"].dt.hour
+        df["time_slot"] = pd.cut(
+            hours,
+            bins=[-1, 11, 17, 21, 24],
+            labels=["Morning", "Afternoon", "Evening", "Late Night"],
+            right=True
+        ).astype(str)
+
     df["quantity"] = 1
     if "order_id" not in df.columns:
         df["order_id"] = df["ticket_id"] if "ticket_id" in df.columns else range(1, len(df) + 1)
@@ -132,16 +156,22 @@ def enrich_dimensions(df):
 
 def apply_filters(df):
     st.sidebar.header("Filters")
-    for col in ["product_name", "product_category", "seat_type", "day_type"]:
+    for col in ["month_name", "product_name", "product_category", "seat_type", "day_type", "time_slot"]:
         if col in df.columns:
-            vals = sorted(df[col].dropna().astype(str).unique().tolist())
+            vals = df[col].dropna().astype(str).unique().tolist()
+            # จัดลำดับ Weekday ให้ขึ้นก่อน Weekend
+            if col == "day_type":
+                vals = [v for v in ["Weekday", "Weekend"] if v in vals]
+            else:
+                vals = sorted(vals)
+
             if vals:
                 selected = st.sidebar.multiselect(col.replace("_", " ").title(), vals, default=vals)
                 df = df[df[col].astype(str).isin(selected)]
     return df
 
 def main():
-    st.title("Movie DW Sales OLAP Dashboard ")
+    st.title("Movie DW Sales OLAP Dashboard")
     df = load_data()
 
     if df.empty:
@@ -161,10 +191,10 @@ def main():
 
     st.sidebar.header("OLAP Views")
     
-    # เพิ่มตัวเลือก มิติในการกระจายข้อมูล (Product Name / Seat Type / Category)
+    # เพิ่ม time_slot เข้าไปในดรอปดาวน์เพื่อใช้ตอบโจทย์ข้อ 3
     dimension_option = st.sidebar.selectbox(
         "Group By Dimension", 
-        ["product_name", "product_category", "seat_type", "day_type", "month_name", "date_label"],
+        ["month_name", "product_name", "product_category", "seat_type", "day_type", "time_slot", "date_label"],
         index=0
     )
     
