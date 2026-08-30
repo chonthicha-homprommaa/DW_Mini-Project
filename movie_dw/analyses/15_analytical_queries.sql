@@ -1,184 +1,158 @@
-15 Business Questions)
--- 1. มุมมองด้านรายได้และการขาย (Revenue & Sales Analysis)
--- ------------------------------------------------------------
--- Q1: รายได้รวมจากการขายตั๋วและสินค้า Concession แยกตามเดือน/ไตรมาส
+-- ข้อ 1: รายได้ตั๋วหนังและ Concession รายเดือน / ไตรมาส
 SELECT 
-    d.year,
-    d.quarter,
-    d.month_name,
-    SUM(t.total_price) AS ticket_revenue,
-    SUM(c.total_price) AS concession_revenue,
-    (SUM(t.total_price) + SUM(c.total_price)) AS total_revenue
-FROM dim_date d
-LEFT JOIN fact_ticket_sales t ON d.date_key = t.date_key
-LEFT JOIN fact_concession_sales c ON d.date_key = c.date_key
-GROUP BY d.year, d.quarter, d.month, d.month_name
-ORDER BY d.year, d.month;
+    s.show_date,
+    SUM(t.final_price) AS ticket_revenue
+FROM fact_ticket_sales t
+JOIN dim_showtimes s ON t.showtime_id = s.showtime_id
+GROUP BY s.show_date
+ORDER BY s.show_date;
 
--- Q2: 5 อันดับ หนังทำเงินสูงสุด (Box Office) ในแต่ละประเภทหนัง (Genre)
+-- ข้อ 2: Top 5 หนังทำรายได้สูงสุด แยกตาม Genre
 WITH RankedMovies AS (
     SELECT 
-        m.genre,
-        m.title,
-        SUM(t.total_price) AS total_gross_revenue,
-        ROW_NUMBER() OVER (PARTITION BY m.genre ORDER BY SUM(t.total_price) DESC) AS rank
+        m.genre, 
+        m.title, 
+        SUM(t.final_price) AS total_revenue,
+        ROW_NUMBER() OVER (PARTITION BY m.genre ORDER BY SUM(t.final_price) DESC) AS rank
     FROM fact_ticket_sales t
-    JOIN dim_movies m ON t.movie_key = m.movie_key
+    JOIN dim_movies m ON t.movie_id = m.movie_id
     GROUP BY m.genre, m.title
 )
-SELECT genre, title, total_gross_revenue
+SELECT genre, title, total_revenue
 FROM RankedMovies
 WHERE rank <= 5
 ORDER BY genre, rank;
 
--- Q3: ช่วงเวลาขายตั๋วดีที่สุดของวัน (Time Slot: เช้า, บ่าย, เย็น, ดึก)
+-- ข้อ 3: ช่วงเวลาใดของวัน (Time Slot) ที่สร้างรายได้มากที่สุด
 SELECT 
-    s.time_slot, -- Morning, Afternoon, Evening, Late Night
-    SUM(t.total_price) AS ticket_revenue,
-    COUNT(t.ticket_id) AS total_tickets_sold
+    s.time_slot, 
+    SUM(t.final_price) AS ticket_revenue
 FROM fact_ticket_sales t
-JOIN dim_showtimes s ON t.showtime_key = s.showtime_key
-GROUP BY s.time_slot
+JOIN dim_showtimes s ON t.showtime_id = s.showtime_id
+GROUP BY s.time_slot 
 ORDER BY ticket_revenue DESC;
 
--- Q4: ยอดขาย Concession เฉลี่ยต่อผู้เข้าชม 1 คน (Concession Spend Per Head)
+-- ข้อ 4: Concession Spending Per Head
 SELECT 
-    SUM(c.total_price) AS total_concession_revenue,
-    COUNT(DISTINCT t.customer_key) AS total_attendees,
-    ROUND(SUM(c.total_price) / COUNT(DISTINCT t.customer_key), 2) AS spend_per_head
-FROM fact_ticket_sales t
-FULL OUTER JOIN fact_concession_sales c ON t.customer_key = c.customer_key;
+    SUM(c.total_price) AS total_concession_rev,
+    COUNT(DISTINCT t.ticket_sale_id) AS total_tickets,
+    ROUND(SUM(c.total_price) / NULLIF(COUNT(DISTINCT t.ticket_sale_id), 0), 2) AS spend_per_head
+FROM fact_concession_sales c
+CROSS JOIN fact_ticket_sales t;
 
-
--- ------------------------------------------------------------
--- 2. มุมมองด้านลูกค้าและสมาชิก (Customer & Membership Analysis)
--- ------------------------------------------------------------
-
--- Q5: ยอด spending รวมของสมาชิกแต่ละระดับ (Silver, Gold, Platinum)
+-- ข้อ 5: ยอด Spending รวมแยกตาม Member Tier
 SELECT 
     c.member_tier,
-    SUM(t.total_price) AS ticket_spending,
-    SUM(cs.total_price) AS concession_spending,
-    (SUM(t.total_price) + SUM(cs.total_price)) AS total_spending
+    SUM(t.final_price) AS ticket_spending
 FROM dim_customers c
-LEFT JOIN fact_ticket_sales t ON c.customer_key = t.customer_key
-LEFT JOIN fact_concession_sales cs ON c.customer_key = cs.customer_key
+LEFT JOIN fact_ticket_sales t ON c.customer_id = t.customer_id
 GROUP BY c.member_tier
-ORDER BY total_spending DESC;
+ORDER BY ticket_spending DESC;
 
--- Q6: ประเภทที่นั่งยอดนิยมของลูกค้าระดับ Platinum (Normal, Honeymoon, VIP)
+-- ข้อ 6: ประเภทที่นั่งที่ลูกค้า Platinum นิยมซื้อมากที่สุด
 SELECT 
-    t.seat_type,
-    COUNT(t.ticket_id) AS total_seats_booked,
-    SUM(t.total_price) AS total_revenue
+    t.seat_type, 
+    COUNT(t.ticket_sale_id) AS total_seats_booked, 
+    SUM(t.final_price) AS total_spending
 FROM fact_ticket_sales t
-JOIN dim_customers c ON t.customer_key = c.customer_key
+JOIN dim_customers c ON t.customer_id = c.customer_id
 WHERE c.member_tier = 'Platinum'
-GROUP BY t.seat_type
+GROUP BY t.seat_type 
 ORDER BY total_seats_booked DESC;
 
--- Q7: สมาชิกกลุ่มใดที่ซื้อสินค้า Concession มากที่สุด และสินค้ายอดนิยมของกลุ่ม Gold/Platinum
+-- ข้อ 7: ยอดซื้อ Concession ของสมาชิกระดับ Gold / Platinum
 SELECT 
-    c.member_tier,
-    cs.item_category,
-    cs.item_name,
-    SUM(cs.quantity) AS total_quantity_bought,
-    SUM(cs.total_price) AS total_amount_spent
-FROM fact_concession_sales cs
-JOIN dim_customers c ON cs.customer_key = c.customer_key
+    c.member_tier, 
+    c_sales.item_name, 
+    SUM(c_sales.quantity) AS total_qty, 
+    SUM(c_sales.total_price) AS total_spend
+FROM fact_concession_sales c_sales
+JOIN dim_customers c ON c_sales.customer_id = c.customer_id
 WHERE c.member_tier IN ('Gold', 'Platinum')
-GROUP BY c.member_tier, cs.item_category, cs.item_name
-ORDER BY c.member_tier, total_amount_spent DESC;
+GROUP BY c.member_tier, c_sales.item_name 
+ORDER BY total_spend DESC;
 
--- Q8: ยอดขายตั๋วจำแนกตามประเภทสมาชิกในแต่ละไตรมาส (Customer Loyalty)
+-- ข้อ 8: ยอดขายตั๋วตามประเภทสมาชิกในแต่ละไตรมาส
 SELECT 
-    d.year,
-    d.quarter,
-    c.member_tier,
-    SUM(t.total_price) AS quarterly_ticket_sales
+    c.member_tier, 
+    s.show_date,
+    COUNT(t.ticket_sale_id) AS tickets_sold,
+    SUM(t.final_price) AS total_revenue
 FROM fact_ticket_sales t
-JOIN dim_customers c ON t.customer_key = c.customer_key
-JOIN dim_date d ON t.date_key = d.date_key
-GROUP BY d.year, d.quarter, c.member_tier
-ORDER BY d.year, d.quarter, c.member_tier;
-
-
--- ------------------------------------------------------------
--- 3. มุมมองด้านภาพยนตร์และการฉาย (Movie & Showtimes Performance Analysis)
--- ------------------------------------------------------------
-
--- Q9: ประเภทหนัง (Genre) ที่ทำรายได้รวมสูงที่สุด
-SELECT 
-    m.genre,
-    SUM(t.total_price) AS total_revenue,
-    COUNT(t.ticket_id) AS total_tickets_sold
-FROM fact_ticket_sales t
-JOIN dim_movies m ON t.movie_key = m.movie_key
-GROUP BY m.genre
+JOIN dim_customers c ON t.customer_id = c.customer_id
+JOIN dim_showtimes s ON t.showtime_id = s.showtime_id
+GROUP BY c.member_tier, s.show_date 
 ORDER BY total_revenue DESC;
 
--- Q10: เรตติ้งภาพยนตร์ (Rating: R, PG-13, PG) ที่ทำรายได้สูงสุด
+-- ข้อ 9: หนังประเภท (Genre) ใดทำรายได้รวมสูงสุด
 SELECT 
-    m.rating,
-    SUM(t.total_price) AS total_revenue,
-    AVG(t.total_price) AS avg_ticket_price
+    m.genre, 
+    SUM(t.final_price) AS total_revenue
 FROM fact_ticket_sales t
-JOIN dim_movies m ON t.movie_key = m.movie_key
-GROUP BY m.rating
+JOIN dim_movies m ON t.movie_id = m.movie_id
+GROUP BY m.genre 
 ORDER BY total_revenue DESC;
 
--- Q11: โรงฉายหมายเลขใด (Screen Number) มีรายได้เฉลี่ยต่อรอบสูงสุด
+-- ข้อ 10: รายได้รวมแยกตาม Rating หนัง (R, PG-13, PG)
 SELECT 
-    s.screen_number,
-    COUNT(DISTINCT s.showtime_id) AS total_showtimes,
-    SUM(t.total_price) AS total_revenue,
-    ROUND(SUM(t.total_price) / COUNT(DISTINCT s.showtime_id), 2) AS avg_revenue_per_showtime
+    m.rating, 
+    SUM(t.final_price) AS total_revenue
 FROM fact_ticket_sales t
-JOIN dim_showtimes s ON t.showtime_key = s.showtime_key
-GROUP BY s.screen_number
-ORDER BY avg_revenue_per_showtime DESC;
+JOIN dim_movies m ON t.movie_id = m.movie_id
+GROUP BY m.rating 
+ORDER BY total_revenue DESC;
 
--- Q12: ผลกระทบของหนังที่ยาวเกิน 150 นาที ต่อรอบฉายและรายได้
+-- ข้อ 11: รายได้เฉลี่ยต่อรอบและรายได้รวมแยกตาม Screen Number
 SELECT 
-    CASE WHEN m.duration_minutes > 150 THEN 'Long (>150 mins)' ELSE 'Standard (<=150 mins)' END AS movie_length_category,
-    COUNT(DISTINCT m.movie_key) AS total_movies,
-    COUNT(DISTINCT s.showtime_id) AS total_showtimes,
-    SUM(t.total_price) AS total_revenue,
-    ROUND(SUM(t.total_price) / COUNT(DISTINCT m.movie_key), 2) AS avg_revenue_per_movie
+    s.screen_number, 
+    ROUND(AVG(t.final_price), 2) AS avg_rev_per_ticket, 
+    SUM(t.final_price) AS total_revenue
 FROM fact_ticket_sales t
-JOIN dim_movies m ON t.movie_key = m.movie_key
-JOIN dim_showtimes s ON t.showtime_key = s.showtime_key
-GROUP BY CASE WHEN m.duration_minutes > 150 THEN 'Long (>150 mins)' ELSE 'Standard (<=150 mins)' END;
+JOIN dim_showtimes s ON t.showtime_id = s.showtime_id
+GROUP BY s.screen_number 
+ORDER BY total_revenue DESC;
 
-
--- ------------------------------------------------------------
--- 4. มุมมองด้านที่นั่งและพฤติกรรมการบริโภค (Seat & Concession Trend Analysis)
--- ------------------------------------------------------------
-
--- Q13: รายได้และสัดส่วนเปอร์เซ็นต์ของที่นั่งแต่ละประเภท (Normal, Honeymoon, VIP)
+-- ข้อ 12: ผลกระทบของหนังความยาว > 150 นาที
 SELECT 
-    t.seat_type,
-    SUM(t.total_price) AS total_seat_revenue,
-    ROUND(SUM(t.total_price) * 100.0 / SUM(SUM(t.total_price)) OVER(), 2) AS revenue_percentage
+    CASE 
+        WHEN m.duration_minutes > 150 THEN 'Long (>150 mins)' 
+        ELSE 'Standard (<=150 mins)' 
+    END AS duration_group,
+    COUNT(DISTINCT m.movie_id) AS movie_count,
+    COUNT(t.ticket_sale_id) AS tickets_sold,
+    SUM(t.final_price) AS total_revenue
 FROM fact_ticket_sales t
-GROUP BY t.seat_type
-ORDER BY total_seat_revenue DESC;
+JOIN dim_movies m ON t.movie_id = m.movie_id
+GROUP BY 1;
 
--- Q14: สินค้า Concession ขายดีที่สุดเชิงปริมาณและเชิงรายได้
+-- ข้อ 13: รายได้และสัดส่วน (%) แยกตามประเภทที่นั่ง
 SELECT 
-    cs.item_name,
-    cs.item_category,
-    SUM(cs.quantity) AS total_quantity_sold,
-    SUM(cs.total_price) AS total_concession_revenue
-FROM fact_concession_sales cs
-GROUP BY cs.item_name, cs.item_category
-ORDER BY total_concession_revenue DESC;
+    seat_type, 
+    SUM(final_price) AS total_revenue,
+    ROUND(SUM(final_price) * 100.0 / NULLIF((SELECT SUM(final_price) FROM fact_ticket_sales), 0), 2) AS revenue_share_pct
+FROM fact_ticket_sales
+GROUP BY seat_type 
+ORDER BY total_revenue DESC;
 
--- Q15: ความสัมพันธ์ของการซื้อ Combo Set ในวันหยุด vs วันทำงาน
+-- ข้อ 14: สินค้า Concession ขายดีที่สุด (Quantity & Total Price)
 SELECT 
-    d.is_weekend, -- TRUE (วันหยุด), FALSE (วันทำงาน)
-    SUM(CASE WHEN cs.item_category = 'Combo Set' THEN cs.quantity ELSE 0 END) AS combo_sets_sold,
-    SUM(cs.total_price) AS total_concession_revenue
-FROM fact_concession_sales cs
-JOIN dim_date d ON cs.date_key = d.date_key
-GROUP BY d.is_weekend;
+    item_name, 
+    SUM(quantity) AS total_qty, 
+    SUM(total_price) AS total_revenue
+FROM fact_concession_sales
+GROUP BY item_name 
+ORDER BY total_revenue DESC;
+
+-- ข้อ 15: ความสัมพันธ์ของการชมภาพยนตร์ช่วงวันหยุด/วันทำงาน กับการซื้อ Combo Set
+SELECT 
+    s.day_type,
+    CASE 
+        WHEN c_sales.item_name LIKE '%Combo%' THEN 'Combo Set' 
+        ELSE 'Single Item' 
+    END AS product_type,
+    SUM(c_sales.quantity) AS total_quantity,
+    SUM(c_sales.total_price) AS total_revenue
+FROM fact_concession_sales c_sales
+JOIN dim_showtimes s ON c_sales.showtime_id = s.showtime_id
+GROUP BY s.day_type, 2 
+ORDER BY s.day_type, total_revenue DESC;

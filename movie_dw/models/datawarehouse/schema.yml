@@ -24,22 +24,20 @@ models:
 
   - name: fact_ticket_sales
     columns:
-      - name: ticket_sale_id
+      - name: ticket_id
         tests:
           - unique
           - not_null
       - name: customer_id
         tests:
           - relationships:
-              arguments:
-                to: ref('dim_customers')
-                field: customer_id
+              to: ref('dim_customers')
+              field: customer_id
       - name: movie_id
         tests:
           - relationships:
-              arguments:
-                to: ref('dim_movies')
-                field: movie_id
+              to: ref('dim_movies')
+              field: movie_id
 
   - name: fact_concession_sales
     columns:
@@ -50,6 +48,5 @@ models:
       - name: customer_id
         tests:
           - relationships:
-              arguments:
-                to: ref('dim_customers')
-                field: customer_id
+              to: ref('dim_customers')
+              field: customer_id
