@@ -5,149 +5,111 @@ Data Warehouse Member G.
 4. 673020268-9 อนัญญา ทองปน
 5. 673020487-7 กนกวรรณ หงษ์โสภา
 
-## มุมมองด้านรายได้และภาพรวม (Revenue & Overview)
-
-1. รายได้รวมจากการขายตั๋วภาพยนตร์เป็นเท่าใด?
-
-- รายได้รวมจากการขายตั๋วภาพยนตร์ทั้งหมด (Total Ticket Revenue):เท่ากับ $1,338,110.00 (จากจำนวนตั๋วทั้งหมด 5,279 ใบ)
-
-    <img width="1537" height="972" alt="สกรีนช็อต 2026-08-30 165813" src="https://github.com/user-attachments/assets/4643a273-b460-4f23-a5d5-2fd715e5b112" />
-
-2. ช่วงเวลาใดของวัน (Time Slot: เช้า, บ่าย, เย็น, ดึก) ที่สร้างรายได้จากการขายตั๋วมากที่สุด?
-
-- ช่วงเวลา (Time Slot) ที่ทำรายได้สูงที่สุด:
-
-อันดับ 1 (สูงสุด): ช่วง Morning (เช้า) ทำรายได้สูงถึง $661,090.00 (คิดเป็นเกือบ 50% ของรายได้ตั๋วทั้งหมด)
-
-อันดับ 2: ช่วง Afternoon (บ่าย) ทำรายได้ $400,240.00
-
-อันดับ 3: ช่วง Evening (เย็น/ค่ำ) ทำรายได้ $276,780.00
+# 1. รายได้รวมจากการขายตั๋วภาพยนตร์ทั้งหมดเป็นเท่าใด?
+<img width="1390" height="435" alt="image" src="https://github.com/user-attachments/assets/fb0f2611-9d77-44ee-b9f1-fa4191531140" />
+    - รายได้รวมจากการขายตั๋ว (Total Ticket Revenue): ทำรายได้รวม 1,394,430.00 บาท จากจำนวนตั๋วภาพยนตร์ที่ขายได้ทั้งหมด
     
-   <img width="1557" height="645" alt="image" src="https://github.com/user-attachments/assets/5f490bb9-bf43-44b1-8820-48a34535fbdf" />
+# 2. ช่วงเวลาใดของวัน (Time Slot: Morning, Afternoon, Evening) ที่สร้างรายได้จากการขายตั๋วมากที่สุด?
+<img width="1345" height="672" alt="image" src="https://github.com/user-attachments/assets/510a8c46-59bd-45e5-9421-5cdc07010c57" />
+    - Evening (17:00 - 23:59 น.): ทำรายได้สูงสุดอยู่ที่ 683,120 บาท (คิดเป็น 49.0% ของรายได้รวมทั้งหมด)
+    - Morning (06:00 - 11:59 น.): ทำรายได้ 363,500 บาท (คิดเป็น 26.1%)
+    - Afternoon (12:00 - 16:59 น.): ทำรายได้ 347,810 บาท (คิดเป็น 24.9%)
+        - รายได้รวมทุกช่วงเวลา: 1,394,430 บาท
+        
+# 3. ยอดขายสินค้า Concession รวมคิดเป็นยอดซื้อเฉลี่ยต่อผู้เข้าชม 1 คน (Spend Per Head) เป็นเท่าใด?
+<img width="1405" height="277" alt="image" src="https://github.com/user-attachments/assets/95a1f537-7680-4e52-bd00-357b790551aa" />
+    - Concession Spend Per Head: ยอดใช้จ่ายป๊อปคอร์นและเครื่องดื่มเฉลี่ยอยู่ที่ 13.33 บาท/คน (ผู้เข้าชม 1 คน ซื้อสินค้า Concession เฉลี่ย 13.33 บาท)
 
-3. ยอดขายสินค้า Concession รวมคิดเป็นยอดซื้อเฉลี่ยต่อผู้เข้าชม 1 คน (Spend Per Head) เป็นเท่าใด?
-
-- ยอดขาย Concession รวมจริง: $73,320.00
-
-- จำนวนตั๋วรวมจริง: 5,279 ใบ
-
-- Concession Spend Per Head จริง: $13.89 ต่อคน
-
-   <img width="675" height="102" alt="image" src="https://github.com/user-attachments/assets/db76d299-7077-447a-8e3e-26642b63ebe3" />
-   
-   python3 -c "import duckdb; con = duckdb.connect('movie_dw/dev.duckdb'); print(con.execute('SELECT SUM(total_price) AS total_concession_rev, 5279 AS total_tickets, ROUND(SUM(total_price) / 5279.0, 2) AS spend_per_head FROM fact_concession_sales').df())"
-   
-   <img width="528" height="43" alt="image" src="https://github.com/user-attachments/assets/89e1b22e-8515-44b6-8a34-6828564a432a" />
-   
-python3 -c "import duckdb; con = duckdb.connect('movie_dw/dev.duckdb'); print(con.execute('SELECT COALESCE(m.member_tier, \'Non-Member\') AS member_tier, SUM(t.final_price) AS total_spending, COUNT(DISTINCT t.ticket_id) AS total_tickets, ROUND(SUM(t.final_price) / COUNT(DISTINCT t.ticket_id), 2) AS avg_spending_per_ticket FROM fact_ticket_sales t LEFT JOIN dim_customers m ON t.customer_id = m.customer_id GROUP BY m.member_tier ORDER BY total_spending DESC').df())"
-
-4.สัดส่วนรายได้รวมระหว่างยอดขายตั๋ว (Ticket Revenue) กับยอดขาย Concession คิดเป็นกี่เปอร์เซ็นต์?
-
-- ตั๋ว 94.8% ($1,338,110)
-- Concession 5.2% ($73,320)
-
-5.ราคาตั๋วเฉลี่ยต่อใบ (Average Ticket Price) ของภาพยนตร์ทั้งหมดเป็นเท่าใด?
-
-- ประมาณ $253.48 ต่อใบ
-
-## ด้านภาพยนตร์และโรงฉาย (Movies & Showtimes)
-
-6. ภาพยนตร์เรื่องใดทำรายได้รวม (Box Office) สูงสุด 5 อันดับแรก
-
-- ภาพยนตร์ที่ทำรายได้สูงสุด 5 อันดับแรก (Top 5 Movies by Revenue):
+# 4. สัดส่วนรายได้รวมระหว่างยอดขายตั๋ว (Ticket Revenue) กับยอดขาย Concession คิดเป็นกี่เปอร์เซ็นต์?
+<img width="1382" height="718" alt="image" src="https://github.com/user-attachments/assets/c544afb8-45e2-4026-a09b-e2b73997f92c" />
+<img width="1397" height="343" alt="image" src="https://github.com/user-attachments/assets/3f789a8d-fdeb-4e26-8eb0-251fd2506618" />
+    - Ticket Revenue (รายได้ขายตั๋ว): 1,394,430 บาท คิดเป็น 95% ของรายได้รวม
+    - Concession Revenue (รายได้ป๊อปคอร์นและเครื่องดื่ม): 73,320 บาท คิดเป็น 5% ของรายได้รวม
+        - รายได้รวมทั้งหมด: 1,467,750 บาท
+        
+# 5. ราคาตั๋วเฉลี่ยต่อใบ (Average Ticket Price) ของภาพยนตร์ทั้งหมดเป็นเท่าใด?
+<img width="1376" height="262" alt="image" src="https://github.com/user-attachments/assets/9b45c08b-e23e-4be2-bfe9-906f9fec1b64" />
+    - Average Ticket Price: ราคาตั๋วชมภาพยนตร์เฉลี่ยอยู่ที่ 253.53 บาท/ใบ
     
-อันดับที่ 1 Speak No Evil: $65,420
-    
-อันดับที่ 2 Twisters: ~$64,180
-    
-อันดับที่ 3 Civil War: ~$58,540
-    
-อันดับที่ 4 Despicable Me 4: ~$57,090
-    
-อันดับที่ 5 Furiosa: A Mad Max Saga: ~$50,120
+# 6. ภาพยนตร์เรื่องใดทำรายได้รวมสูงสุด 5 อันดับแรก (Top 5 Movies)?
+<img width="1353" height="697" alt="image" src="https://github.com/user-attachments/assets/92b1b644-a599-425f-bb7e-3b5afa70a1b0" />
+<img width="1390" height="477" alt="image" src="https://github.com/user-attachments/assets/10886d0c-e67c-4b38-9184-cbfdcfa71365" />
+    - Speak No Evil: 65,420 บาท (อันดับ 1)
+    - Twisters: 64,180 บาท
+    - IF: 61,070 บาท
+    - Civil War: 58,540 บาท
+    - Despicable Me 4: 57,090 บาท
+        - รายได้รวม Top 5: 306,300 บาท
 
-7. หมวดหมู่ภาพยนตร์ใดที่ทำรายได้สูงสุด (Genre)?
+# 7. หมวดหมู่ภาพยนตร์ (Genre) ใดที่ทำรายได้รวมสูงที่สุด?
+<img width="1383" height="692" alt="image" src="https://github.com/user-attachments/assets/7e8bd2c3-62e7-413e-a773-992eece75754" />
+<img width="1402" height="480" alt="image" src="https://github.com/user-attachments/assets/545d09b5-eef2-4e8c-be3b-486a1f5e7e5f" />
+    - Horror (สยองขวัญ): 302,510 บาท (อันดับ 1 - คิดเป็น 21.7% ของรายได้รวม)
+    - Drama (ดราม่า): 247,420 บาท (คิดเป็น 17.7%)
+    - Action (แอ็คชัน): 234,940 บาท (คิดเป็น 16.9%)
+    - Animation (แอนิเมชัน): 207,350 บาท (คิดเป็น 14.9%)
+    - Sci-Fi (ไซไฟ): 202,400 บาท (คิดเป็น 14.5%)
+    - Comedy (ตลก): 199,810 บาท (คิดเป็น 14.3%)
 
-- หมวดหมู่ภาพยนตร์ที่ทำรายได้สูงสุด (Revenue by Product Category)คือ
-    
-อันดับที่ 1 Horror (สยองขวัญ): $302,510
-    
-อันดับที่ 2 Drama (ดราม่า): ~$235,350
-    
-อันดับที่ 3 Action (แอ็กชัน): ~$234,940
-    
-อันดับที่ 4 Animation (แอนิเมชัน): ~$207,350
-    
-อันดับที่ 5 Sci-Fi (ไซไฟ): ~$186,690
-    
-อันดับที่ 6 Comedy (ตลก): ~$171,270
+# 8. ภาพยนตร์ที่มีระดับความเหมาะสม (Rating เช่น R, PG-13, PG) แบบใดที่ทำรายได้รวมสูงที่สุด?
+<img width="1388" height="702" alt="image" src="https://github.com/user-attachments/assets/af9ffd59-a1c7-48ad-ba4a-e84f05847f36" />
+<img width="1382" height="350" alt="image" src="https://github.com/user-attachments/assets/ee7d1e04-9631-45db-999f-0e6f01e91811" />
+    - R (Restricted): 703,540 บาท (อันดับ 1 - คิดเป็น 50.5% ของรายได้รวม)
+    - PG-13 (Parents Strongly Cautioned): 393,990 บาท (คิดเป็น 28.3%)
+    - PG (Parental Guidance Suggested): 296,900 บาท (คิดเป็น 21.3%)
+        - รายได้รวมทุก Rating: 1,394,430 บาท
 
-<img width="1533" height="646" alt="สกรีนช็อต 2026-08-30 171218" src="https://github.com/user-attachments/assets/32ae3b6d-dbee-4212-bdb3-cb0bf334af03" />
+# 9. โรงฉายหมายเลขใด (Screen Number) ที่ทำรายได้รวมจากการขายตั๋วสูงที่สุด?
+<img width="1387" height="702" alt="image" src="https://github.com/user-attachments/assets/4f3d18f1-2b31-47c0-8197-5d57350be074" />
+    - Screen 10: 295,900 บาท 
+    - Screen 1: 182,040 บาท
+    - Screen 5: 167,820 บาท
+    - Screen 3: 158,410 บาท
+    - Screen 7: 148,820 บาท
+    - Screen 2: 108,060 บาท
+    - Screen 8: 107,220 บาท
+    - Screen 4: 105,000 บาท
+    - Screen 6: 66,830 บาท
+        - Screen 9: 54,330 บาท 
+        
+# 10. สมาชิกระดับต่างๆ (Member Tier: Silver, Gold, Platinum) มียอด spending รวมต่างกันอย่างไร?
+<img width="1385" height="705" alt="image" src="https://github.com/user-attachments/assets/3897e64d-1ea0-446d-bd7f-1c1b4643fdd1" />
+    - Platinum: 493,440 บาท (อันดับ 1 - คิดเป็น 35.4% ของรายได้รวม)
+    - Silver: 476,870 บาท (อันดับ 2 - คิดเป็น 34.2%)
+    - Gold: 424,120 บาท (อันดับ 3 - คิดเป็น 30.4%)
+        - ยอดใช้จ่ายรวมของสมาชิกทุกระดับ: 1,394,430 บาท
 
-<img width="1608" height="652" alt="สกรีนช็อต 2026-08-30 171237" src="https://github.com/user-attachments/assets/2a2ba3fd-4279-42e6-9818-1ce1009defa0" />
-
-8.ภาพยนตร์ที่มีระดับความเหมาะสม (Rating เช่น R, PG-13, PG) แบบใดที่ทำรายได้รวมสูงที่สุด?
-
-9.โรงฉายหมายเลขใด (Screen Number) ที่ทำรายได้รวมจากการขายตั๋วสูงที่สุด?
-
-# ด้านพฤติกรรมลูกค้าและที่นั่ง (Member & Seat Behavior)
-
-10. สมาชิกระดับต่างๆ (Member Tier: Silver, Gold, Platinum) มียอด spending รวมต่างกันอย่างไร?
-
-- สมาชิกระดับ Platinum มียอด spending รวม คือ $493,440
-  
-- สมาชิกระดับ Silver มียอด spending รวม คือ $476,870
-  
-- สมาชิกระดับ Gold มียอด spending รวม คือ $424,120
-   
-   python3 -c "import duckdb; con = duckdb.connect('movie_dw/dev.duckdb'); print(con.execute('SELECT c.member_tier, SUM(t.final_price) AS ticket_spending FROM dim_customers c LEFT JOIN fact_ticket_sales t ON c.customer_id = t.customer_id GROUP BY c.member_tier ORDER BY ticket_spending DESC').df())"
-  
-   <img width="292" height="87" alt="image" src="https://github.com/user-attachments/assets/b2ddc166-b163-4294-8661-9d3070a47ea7" />
-
-11. ยอดขายตั๋วรวม (Total Tickets) จำแนกตามประเภทสมาชิก (Member Tier) เป็นอย่างไร?
-
-- ระดับ Platinum: จำนวนตั๋ว: 1,959 ใบ
-
-- ระดับ Silver: จำนวนตั๋ว: 1,878 ใบ
-
-- ระดับ Gold: จำนวนตั๋ว: 1,663 ใบ
-
-   <img width="700" height="322" alt="image" src="https://github.com/user-attachments/assets/1d0e1478-123d-40cb-9a31-53ef87cade24" />
-
-12.ลูกค้าระดับ Platinum นิยมซื้อประเภทที่นั่งแบบใดมากที่สุด (Normal, Honeymoon, VIP)?
-
-- ลูกค้าระดับ Platinum นิยมซื้อประเภทที่นั่งแบบ Normal มากที่สุดจำนวน 1,369 ใบ
-
-    <img width="742" height="671" alt="image" src="https://github.com/user-attachments/assets/1c2b9bbb-bb33-4ddb-9af7-7d5e88a31c76" />
-
-13.ประเภทที่นั่งแบบใด (Seat Type: Normal, Honeymoon, VIP) ที่สร้างรายได้รวมให้โรงหนังมากที่สุด?
-
-- ประเภทที่นั่งแบบ Normal สร้างรายได้รวมมากที่สุด
-
-   python3 -c "import duckdb; con = duckdb.connect('movie_dw/dev.duckdb'); print(con.execute('SELECT t.seat_type, COUNT(t.ticket_id) AS total_seats_booked, SUM(t.final_price) AS total_spending FROM fact_ticket_sales t JOIN dim_customers c ON t.customer_id = c.customer_id WHERE c.member_tier = \'Platinum\' GROUP BY t.seat_type ORDER BY total_seats_booked DESC').df())"
-   
-   <img width="467" height="87" alt="image" src="https://github.com/user-attachments/assets/5d74b6da-52e4-4518-bb53-ec42338d2b6f" />
-   
-   <img width="1487" height="427" alt="image" src="https://github.com/user-attachments/assets/b30322fc-a879-488a-8937-cfe14096e9c2" />
-
-## ด้านสินค้า Concession (Concession Performance)
-
-14. สินค้า Concession ประเภทใดที่เป็นที่นิยมซื้อมากที่สุดของกลุ่มสมาชิกระดับ Gold และ Platinum?
-
-- สินค้า Concession ที่ขายดีที่สุด
-
-อันดับ 1 Popcorn Cheese (ป๊อปคอร์นรสชีส)
-  
-อันดับ 2 Popcorn Sweet (ป๊อปคอร์นรสหวาน)
-
-อันดับ 3 Combo Set A (ชุดคอมโบเซ็ต A)
-
-อันดับ 4 Popcorn Original (ป๊อปคอร์นรสออริจินัล)
-
-   <img width="707" height="676" alt="image" src="https://github.com/user-attachments/assets/871d18f9-9c81-4ea2-a302-81a6a755ecb0" />
-
-15.หมวดหมู่สินค้า Concession (Product Category: Popcorn, Beverage, Combo Set) ใดทำรายได้รวมสูงที่สุด?
-
-- หมวด Popcorn ทำรายได้รวมสูงที่สุด
-   
-<img width="1897" height="773" alt="image" src="https://github.com/user-attachments/assets/8d57b90c-1926-4de8-9b1b-14fe8f4a108b" />
+# 11. ยอดขายตั๋วรวม (Total Tickets) จำแนกตามประเภทสมาชิก (Member Tier) เป็นอย่างไร?
+<img width="1367" height="703" alt="image" src="https://github.com/user-attachments/assets/444a1ea5-d185-4e20-8014-de753147d0fa" />
+    - Platinum: 1,959 ใบ (อันดับ 1 - คิดเป็น 35.6% ของจำนวนตั๋วทั้งหมด)
+    - Silver: 1,878 ใบ (อันดับ 2 - คิดเป็น 34.2%)
+    - Gold: 1,663 ใบ (อันดับ 3 - คิดเป็น 30.2%)
+        - จำนวนตั๋วรวมทั้งหมด: 5,500 ใบ
+# 12. ลูกค้าระดับ Platinum นิยมซื้อประเภทที่นั่งแบบใดมากที่สุด (Normal, Honeymoon, VIP)?
+<img width="1350" height="697" alt="image" src="https://github.com/user-attachments/assets/40d74aec-4aa4-454d-a1df-b1cb8503b3aa" />
+   - Normal (ที่นั่งปกติ): 1,368 ใบ (อันดับ 1 - คิดเป็น 69.8% ของยอดซื้อตั๋ว Platinum)
+    - Honeymoon (ที่นั่งคู่/โซนบน): 401 ใบ (คิดเป็น 20.5%)
+    - VIP (ที่นั่งพิเศษพรีเมียม): 190 ใบ (คิดเป็น 9.7%)
+        - จำนวนตั๋วรวมของสมาชิก Platinum: 1,959 ใบ
+# 13. ประเภทที่นั่งแบบใด (Seat Type: Normal, Honeymoon, VIP) ที่สร้างรายได้รวมให้โรงหนังมากที่สุด?
+<img width="1337" height="700" alt="image" src="https://github.com/user-attachments/assets/ae77979c-d0a6-4efd-8a35-794f33661a36" />
+    - Normal (ที่นั่งปกติ): 993,680 บาท (อันดับ 1 - คิดเป็น 71.3% ของรายได้รวมขายตั๋ว)
+    - Honeymoon (ที่นั่งคู่/โซนบน): 265,700 บาท (คิดเป็น 19.1%)
+    - VIP (ที่นั่งพิเศษพรีเมียม): 135,050 บาท (คิดเป็น 9.7%)
+        - รายได้รวมทุกประเภทที่นั่ง: 1,394,430 บาท
+# 14. สินค้า Concession ประเภทใดที่เป็นที่นิยมซื้อมากที่สุดของกลุ่มสมาชิกระดับ Gold และ Platinum?
+<img width="1385" height="711" alt="image" src="https://github.com/user-attachments/assets/aa83650c-8b23-461d-b1fe-4b3eb1fced92" />
+    - Popcorn Cheese: 59 ชิ้น (อันดับ 1 - นิยมสูงสุด)
+    - Popcorn Sweet: 57 ชิ้น
+    - Combo Set A: 50 ชิ้น
+    - Popcorn Original: 46 ชิ้น
+    - Water: 44 ชิ้น
+    - Soda (M): 41 ชิ้น
+    - Soda (L): 39 ชิ้น
+        - Combo Set B: 39 ชิ้น
+# 15. หมวดหมู่สินค้า Concession (Product Category: Popcorn, Beverage, Combo Set) ใดทำรายได้รวมสูงที่สุด?
+<img width="1355" height="688" alt="image" src="https://github.com/user-attachments/assets/4a13062b-c594-4847-82ca-b2cecb701e8d" />
+    - Combo Set (ชุดเซ็ตป๊อปคอร์น+เครื่องดื่ม): 35,210 บาท (อันดับ 1 - คิดเป็น 48.0% ของรายได้ Concession)
+    - Popcorn (ป๊อปคอร์นเดี่ยว): 27,040 บาท (คิดเป็น 36.9%)
+    - Beverage (เครื่องดื่มเดี่ยว): 11,070 บาท (คิดเป็น 15.1%)
+        - รายได้รวม Concession ทั้งหมด: 73,320 บาท
