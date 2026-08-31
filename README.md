@@ -20,7 +20,7 @@ Data Warehouse Member G.
 <img width="1346" height="160" alt="image" src="https://github.com/user-attachments/assets/d87790ee-ed7c-473a-9c8a-45ee310238ec" />
     -Concession Spend Per Head: ยอดใช้จ่ายป๊อปคอร์นและเครื่องดื่มเฉลี่ยอยู่ที่ 13.33 บาท/คน (ผู้เข้าชม 1 คน ซื้อสินค้า Concession เฉลี่ย 13.33 บาท)
 
-# 4. สัดส่วนรายได้รวมระหว่างยอดขายตั๋ว (Ticket Revenue) กับยอดขาย Concession คิดเป็นกี่เปอร์เซ็นต์?<img width="1136" height="572" alt="image" src="https://github.com/user-attachments/assets/21cd992b-5ea9-4320-9053-2650c553dc4a" />
+# 4. สัดส่วนรายได้รวมระหว่างยอดขายตั๋ว (Ticket Revenue) กับยอดขาย Concession คิดเป็นกี่เปอร์เซ็นต์?
 <img width="1136" height="572" alt="image" src="https://github.com/user-attachments/assets/ec749d64-d251-408f-b87c-83e955fb5125" />
 <img width="1350" height="177" alt="image" src="https://github.com/user-attachments/assets/f744fa0d-181a-4d54-be64-c20f93b8b0d1" />
     -Ticket Revenue (รายได้ขายตั๋ว): 1,394,430 บาท คิดเป็น 95% ของรายได้รวม
