@@ -1,402 +1,334 @@
 import os
-from pathlib import Path
-import duckdb
+import sqlite3
+import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="Cinema Analytics Dashboard", layout="wide")
-st.title("🎬 Cinema Data Analytics - 15 Business Insights")
+st.set_page_config(
+    page_title="Cinema Data Analytics Dashboard",
+    page_icon="🎬",
+    layout="wide",
+)
 
-# ----------------- Database Connection -----------------
-PROJECT_ROOT = Path(__file__).resolve().parent
+st.title("🎬 Cinema Data Analytics Dashboard")
+st.markdown("ระบบรายงานและวิเคราะห์ข้อมูลยอดขายภาพยนตร์และ Concession")
 
-# กำหนด Path ตรงไปยัง dev.duckdb ในโฟลเดอร์ movie_dw
-DB_PATH = PROJECT_ROOT / "movie_dw" / "dev.duckdb"
+# --- ฟังก์ชันค้นหาไฟล์ CSV อัตโนมัติในโปรเจกต์ ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# หากหาใน movie_dw ไม่เจอ ให้ลองถอยออกไปดูชั้นนอก
-if not DB_PATH.exists():
-    DB_PATH = PROJECT_ROOT / "dev.duckdb"
 
-if not DB_PATH.exists():
-    st.error(f"❌ ไม่พบไฟล์ฐานข้อมูลที่: {DB_PATH}")
-    st.info("💡 กรุณารันคำสั่ง `cd movie_dw && dbt build` ใน Terminal ก่อนครับ")
-    st.stop()
+def find_csv_file(filename):
+    # 1. เช็คในโฟลเดอร์ปัจจุบัน
+    path_direct = os.path.join(BASE_DIR, filename)
+    if os.path.exists(path_direct):
+        return path_direct
 
-# เชื่อมต่อ DuckDB
+    # 2. ค้นหาในโฟลเดอร์ย่อยทั้งหมด
+    for root, dirs, files in os.walk(BASE_DIR):
+        if filename in files:
+            return os.path.join(root, filename)
+
+    raise FileNotFoundError(f"ไม่พบไฟล์ {filename} ในระบบ")
+
+
+# --- Function สำหรับโหลดข้อมูลเข้า SQLite (In-Memory) ---
+@st.cache_data
+def load_data_to_sqlite():
+    conn = sqlite3.connect(":memory:", check_same_thread=False)
+
+    df_tix = pd.read_csv(find_csv_file("ticket_sales_large.csv"))
+    df_con = pd.read_csv(find_csv_file("concession_sales_large.csv"))
+    df_show = pd.read_csv(find_csv_file("showtimes_large.csv"))
+    df_cust = pd.read_csv(find_csv_file("customers.csv"))
+    df_mov = pd.read_csv(find_csv_file("movies.csv"))
+
+    df_tix.to_sql("ticket_sales", conn, index=False, if_exists="replace")
+    df_con.to_sql("concession_sales", conn, index=False, if_exists="replace")
+    df_show.to_sql("showtimes", conn, index=False, if_exists="replace")
+    df_cust.to_sql("customers", conn, index=False, if_exists="replace")
+    df_mov.to_sql("movies", conn, index=False, if_exists="replace")
+
+    return conn
+
+
 try:
-    conn = duckdb.connect(str(DB_PATH), read_only=True)
+    conn = load_data_to_sqlite()
 except Exception as e:
-    st.error(f"❌ ไม่สามารถเชื่อมต่อ DuckDB ได้: {e}")
+    st.error(
+        f"เกิดข้อผิดพลาดในการโหลดไฟล์ข้อมูล: {e}\n\nกรุณาตรวจสอบว่าไฟล์ CSV อยู่ในโฟลเดอร์โปรเจกต์หรือไม่"
+    )
     st.stop()
 
-# ฟังก์ชันรัน Query
+
 def run_query(sql):
     try:
-        return conn.execute(sql).fetchdf()
+        return pd.read_sql_query(sql, conn)
     except Exception as e:
-        st.error(f"❌ เกิดข้อผิดพลาดในการรัน Query: {e}")
+        st.error(f"SQL Error: {e}")
         return None
 
-# ดึงชื่อตารางจริงใน DuckDB (รองรับทั้ง fact_... และ fct_...)
-try:
-    all_tables = [r[0] for r in conn.execute("SHOW TABLES").fetchall()]
-except Exception:
-    all_tables = []
 
-def get_table(possible_names):
-    for p in possible_names:
-        for real in all_tables:
-            if p.lower() == real.lower():
-                return real
-    return possible_names[0]
+# --- Sidebar เลือกโจทย์วิเคราะห์ ---
+st.sidebar.header("📌 เลือกหัวข้อวิเคราะห์")
+question_option = st.sidebar.selectbox(
+    "เลือกคำถามที่ต้องการดูข้อมูล:",
+    [
+        "1. รายได้รวมจากการขายตั๋วทั้งหมด",
+        "2. รายได้ตามช่วงเวลา (Time Slot)",
+        "3. ยอดซื้อเฉลี่ยต่อผู้เข้าชม (Spend Per Head)",
+        "4. สัดส่วนรายได้ ตั๋ว vs Concession (%)",
+        "5. ราคาตั๋วเฉลี่ยต่อใบ (Average Ticket Price)",
+        "6. Top 5 ภาพยนตร์ทำรายได้สูงสุด",
+        "7. หมวดหมู่ภาพยนตร์ (Genre) ที่ทำรายได้สูงสุด",
+        "8. รายได้รวมตามระดับความเหมาะสม (Rating)",
+        "9. โรงฉาย (Screen Number) ที่ทำรายได้สูงสุด",
+        "10. ยอด Spending รวมตามสมาชิกระดับต่างๆ",
+        "11. จำนวนตั๋วรวม จำแนกตามระดับสมาชิก",
+        "12. ประเภทที่นั่งที่ลูกค้าระดับ Platinum นิยมซื้อ",
+        "13. ประเภทที่นั่ง (Seat Type) ที่ทำรายได้สูงสุด",
+        "14. สินค้า Concession ที่นิยมของ Platinum & Gold",
+        "15. รายได้รวมตามหมวดหมู่ Concession",
+    ],
+)
 
-ticket_table = get_table(['fact_ticket_sales', 'fct_ticket_sales', 'stg_ticket_sales', 'ticket_sales'])
-movie_table = get_table(['dim_movies', 'stg_movies', 'movies'])
-customer_table = get_table(['dim_customers', 'stg_customers', 'customers'])
-showtime_table = get_table(['dim_showtimes', 'stg_showtimes', 'showtimes'])
-concession_table = get_table(['fact_concession_sales', 'fct_concession_sales', 'stg_concession_sales', 'concession_sales'])
-
-# ----------------- รายการคำถามธุรกิจ -----------------
-questions = [
-    "1. รายได้รวมตั๋ว+สินค้าหน้าโรง ในแต่ละเดือน/ไตรมาส",
-    "2. Top 5 หนังทำรายได้สูงสุด แยกตาม Genre",
-    "3. รายได้ตั๋วหนังแยกตามช่วงเวลา (Time Slot)",
-    "4. ยอดขาย Concession เฉลี่ยต่อผู้เข้าชม (Per Head)",
-    "5. ยอด Spending รวมแยกตามระดับสมาชิก (Member Tier)",
-    "6. ประเภทที่นั่งที่ลูกค้าระดับ Platinum นิยมซื้อ",
-    "7. ยอดซื้อ Concession ของสมาชิกกลุ่ม Gold/Platinum",
-    "8. ยอดขายตั๋วตามประเภทสมาชิกในแต่ละไตรมาส (Customer Loyalty)",
-    "9. หนังประเภท (Genre) ที่ทำรายได้รวมสูงที่สุด",
-    "10. รายได้แยกตามระดับความเหมาะสมของหนัง (Rating)",
-    "11. โรงฉายหมายเลขใด (Screen Number) มีรายได้เฉลี่ยต่อรอบสูงสุด",
-    "12. ผลกระทบของหนังยาว > 150 นาที ต่อรอบฉายและรายได้",
-    "13. สัดส่วนรายได้ (%) แยกตามประเภทที่นั่ง (Seat Type)",
-    "14. สินค้า Concession ที่ขายดีที่สุดเชิงปริมาณและรายได้",
-    "15. ความสัมพันธ์วันหยุด/วันทำงาน กับการซื้อ Combo Set"
-]
-
-selected_q = st.selectbox("🎯 เลือกข้อคำถามธุรกิจที่ต้องการดูผลลัพธ์:", questions)
 st.divider()
 
-q_num = int(selected_q.split(".")[0])
+# --- แสดงผลตามหัวข้อที่เลือก ---
 
-# ----------------- Logic 15 Business Queries -----------------
-if q_num == 1:
-    st.subheader("1. รายได้รวมจากการขายตั๋วชมภาพยนตร์และสินค้าหน้าโรง ในแต่ละเดือนและไตรมาส")
-    
-    sql = f"""
-    WITH ticket_monthly AS (
-        SELECT 
-            STRFTIME(STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M'), '%Y-%m') AS month_key,
-            'Q' || EXTRACT(QUARTER FROM STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M')) AS quarter_key,
-            SUM(t.final_price) AS ticket_rev
-        FROM {ticket_table} t
-        JOIN {showtime_table} s ON t.showtime_id = s.showtime_id
-        GROUP BY 1, 2
-    ),
-    concession_monthly AS (
-        SELECT 
-            STRFTIME(CAST(sale_date AS DATE), '%Y-%m') AS month_key,
-            SUM(total_price) AS concession_rev
-        FROM {concession_table}
-        GROUP BY 1
+if question_option.startswith("1."):
+    st.header("1. รายได้รวมจากการขายตั๋วภาพยนตร์ทั้งหมด")
+    sql = "SELECT SUM(final_price) AS 'รายได้รวมตั๋ว (บาท)' FROM ticket_sales;"
+    df = run_query(sql)
+    st.metric(
+        "รายได้รวมจากการขายตั๋วทั้งหมด",
+        f"฿{df['รายได้รวมตั๋ว (บาท)'][0]:,.2f}",
     )
-    SELECT 
-        tm.month_key AS "เดือน (Year-Month)",
-        tm.quarter_key AS "ไตรมาส (Quarter)",
-        tm.ticket_rev AS "รายได้ขายตั๋ว (บาท)",
-        COALESCE(cm.concession_rev, 0) AS "รายได้สินค้าหน้าโรง (บาท)",
-        (tm.ticket_rev + COALESCE(cm.concession_rev, 0)) AS "รายได้รวมทั้งหมด (บาท)"
-    FROM ticket_monthly tm
-    LEFT JOIN concession_monthly cm ON tm.month_key = cm.month_key
-    ORDER BY tm.month_key
-    """
-    
-    df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-        st.info("📌 **หมายเหตุการวิเคราะห์:** เนื่องจากชุดข้อมูลทดสอบ (Seed Data) มีบันทึกธุรกรรมครอบคลุมเฉพาะช่วงเดือนสิงหาคม 2026 (Q3) ระบบจึงแสดงผลสรุปรายได้รวมของไตรมาส 3 (Q3-2026) จำนวน 1 เดือนตามข้อมูลจริงใน Database")
+    st.dataframe(df, use_container_width=True)
 
-elif q_num == 2:
-    st.subheader("2. ภาพยนตร์เรื่องใดสร้างรายได้รวมและจำนวนตั๋วสูงที่สุด")
-    sql = f"""
-    SELECT 
-        m.title AS "ชื่อภาพยนตร์",
-        m.genre AS "ประเภท",
-        COUNT(t.ticket_id) AS "จำนวนตั๋วที่ขายได้",
-        SUM(t.final_price) AS "รายได้รวม (บาท)"
-    FROM {ticket_table} t
-    JOIN {showtime_table} s ON t.showtime_id = s.showtime_id
-    JOIN {movie_table} m ON s.movie_id = m.movie_id
-    GROUP BY 1, 2
-    ORDER BY "รายได้รวม (บาท)" DESC
-    """
-    df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-        if not df.empty:
-            st.bar_chart(df.set_index("ชื่อภาพยนตร์")["รายได้รวม (บาท)"])
-
-elif q_num == 3:
-    st.subheader("3. ช่วงเวลาการฉาย (Time Slot) ใดมีผู้เข้าชมและสร้างรายได้มากที่สุด")
-    sql = f"""
+elif question_option.startswith("2."):
+    st.header("2. รายได้จากการขายตั๋วแบ่งตามช่วงเวลา (Time Slot)")
+    sql = """
     SELECT 
         CASE 
-            WHEN EXTRACT(HOUR FROM STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M')) BETWEEN 6 AND 11 THEN 'Morning (06:00-11:59)'
-            WHEN EXTRACT(HOUR FROM STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M')) BETWEEN 12 AND 16 THEN 'Afternoon (12:00-16:59)'
-            WHEN EXTRACT(HOUR FROM STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M')) BETWEEN 17 AND 21 THEN 'Evening (17:00-21:59)'
-            ELSE 'Night/Late (22:00-05:59)'
-        END AS "ช่วงเวลา",
-        COUNT(t.ticket_id) AS "จำนวนตั๋ว",
-        SUM(t.final_price) AS "รายได้รวม (บาท)"
-    FROM {ticket_table} t
-    JOIN {showtime_table} s ON t.showtime_id = s.showtime_id
-    GROUP BY 1
-    ORDER BY "รายได้รวม (บาท)" DESC
+            WHEN strftime('%H', show_date) BETWEEN '06' AND '11' THEN 'Morning (06:00-11:59)'
+            WHEN strftime('%H', show_date) BETWEEN '12' AND '16' THEN 'Afternoon (12:00-16:59)'
+            ELSE 'Evening (17:00-23:59)'
+        END AS Time_Slot,
+        SUM(t.final_price) AS 'รายได้รวม (บาท)'
+    FROM ticket_sales t
+    JOIN showtimes s ON t.showtime_id = s.showtime_id
+    GROUP BY 1 ORDER BY 2 DESC;
     """
     df = run_query(sql)
-    if df is not None:
+    col1, col2 = st.columns([1, 1])
+    with col1:
         st.dataframe(df, use_container_width=True)
-        if not df.empty:
-            st.bar_chart(df.set_index("ช่วงเวลา")["รายได้รวม (บาท)"])
+    with col2:
+        st.bar_chart(df.set_index("Time_Slot")["รายได้รวม (บาท)"])
 
-elif q_num == 4:
-    st.subheader("4. สมาชิกแต่ละระดับ (Member Tier) สร้างรายได้รวมเท่าใด")
-    sql = f"""
+elif question_option.startswith("3."):
+    st.header("3. ยอดซื้อ Concession เฉลี่ยต่อผู้เข้าชม 1 คน (Spend Per Head)")
+    sql = """
     SELECT 
-        COALESCE(c.member_tier, 'Non-Member') AS "ระดับสมาชิก",
-        COUNT(DISTINCT t.customer_id) AS "จำนวนลูกค้า",
-        COUNT(t.ticket_id) AS "จำนวนตั๋ว",
-        SUM(t.final_price) AS "รายได้จากตั๋ว (บาท)"
-    FROM {ticket_table} t
-    LEFT JOIN {customer_table} c ON t.customer_id = c.customer_id
-    GROUP BY 1
-    ORDER BY "รายได้จากตั๋ว (บาท)" DESC
+        (SELECT SUM(total_price) FROM concession_sales) * 1.0 / COUNT(ticket_id) AS 'Spend Per Head (บาท/คน)'
+    FROM ticket_sales;
     """
     df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-        if not df.empty:
-            st.bar_chart(df.set_index("ระดับสมาชิก")["รายได้จากตั๋ว (บาท)"])
+    st.metric(
+        "Concession Spend Per Head",
+        f"฿{df['Spend Per Head (บาท/คน)'][0]:,.2f}",
+    )
+    st.dataframe(df, use_container_width=True)
 
-elif q_num == 5:
-    st.subheader("5. สินค้าหน้าโรง (Concession) รายการใดขายดีที่สุด")
-    sql = f"""
+elif question_option.startswith("4."):
+    st.header(
+        "4. สัดส่วนรายได้รวมระหว่างยอดขายตั๋ว (Ticket) กับ Concession (%)"
+    )
+    sql = """
+    WITH totals AS (
+        SELECT 
+            (SELECT SUM(final_price) FROM ticket_sales) AS ticket_rev,
+            (SELECT SUM(total_price) FROM concession_sales) AS concession_rev
+    )
     SELECT 
-        item_name AS "ชื่อสินค้า",
-        SUM(quantity) AS "จำนวนที่ขายได้ (ชิ้น)",
-        SUM(total_price) AS "ยอดขายรวม (บาท)"
-    FROM {concession_table}
-    GROUP BY 1
-    ORDER BY "ยอดขายรวม (บาท)" DESC
-    """
-    df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-        if not df.empty:
-            st.bar_chart(df.set_index("ชื่อสินค้า")["ยอดขายรวม (บาท)"])
-
-elif q_num == 6:
-    st.subheader("6. ประเภทที่นั่ง (Seat Type) แบบใดทำรายได้สูงที่สุด")
-    sql = f"""
-    SELECT 
-        seat_type AS "ประเภทที่นั่ง",
-        COUNT(ticket_id) AS "จำนวนตั๋ว",
-        SUM(final_price) AS "รายได้รวม (บาท)"
-    FROM {ticket_table}
-    GROUP BY 1
-    ORDER BY "รายได้รวม (บาท)" DESC
-    """
-    df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-        if not df.empty:
-            st.bar_chart(df.set_index("ประเภทที่นั่ง")["รายได้รวม (บาท)"])
-
-elif q_num == 7:
-    st.subheader("7. ภาพยนตร์หมวดหมู่ (Genre) ใดได้รับความนิยมสูงสุด")
-    sql = f"""
-    SELECT 
-        m.genre AS "หมวดหมู่ภาพยนตร์",
-        COUNT(t.ticket_id) AS "ตั๋วที่ขายได้",
-        SUM(t.final_price) AS "รายได้รวม (บาท)"
-    FROM {ticket_table} t
-    JOIN {showtime_table} s ON t.showtime_id = s.showtime_id
-    JOIN {movie_table} m ON s.movie_id = m.movie_id
-    GROUP BY 1
-    ORDER BY "ตั๋วที่ขายได้" DESC
-    """
-    df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-        if not df.empty:
-            st.bar_chart(df.set_index("หมวดหมู่ภาพยนตร์")["ตั๋วที่ขายได้"])
-
-elif q_num == 8:
-    st.subheader("8. สัดส่วนรายได้ตามระดับสมาชิกในแต่ละไตรมาส")
-    sql = f"""
-    SELECT 
-        COALESCE(c.member_tier, 'Non-Member') AS "ระดับสมาชิก",
-        'Q' || EXTRACT(QUARTER FROM STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M')) AS "ไตรมาส",
-        SUM(t.final_price) AS "รายได้ (บาท)"
-    FROM {ticket_table} t
-    LEFT JOIN {customer_table} c ON t.customer_id = c.customer_id
-    JOIN {showtime_table} s ON t.showtime_id = s.showtime_id
-    GROUP BY 1, 2
-    ORDER BY "ไตรมาส", "รายได้ (บาท)" DESC
-    """
-    df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-
-elif q_num == 9:
-    st.subheader("9. โรงภาพยนตร์ (Screen Number) ใดมีอัตราการขายตั๋วสูงสุด")
-    sql = f"""
-    SELECT 
-        s.screen_number AS "หมายเลขโรงภาพยนตร์",
-        COUNT(t.ticket_id) AS "จำนวนตั๋วที่ขายได้",
-        SUM(t.final_price) AS "รายได้รวม (บาท)"
-    FROM {ticket_table} t
-    JOIN {showtime_table} s ON t.showtime_id = s.showtime_id
-    GROUP BY 1
-    ORDER BY "จำนวนตั๋วที่ขายได้" DESC
-    """
-    df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-        if not df.empty:
-            st.bar_chart(df.set_index("หมายเลขโรงภาพยนตร์")["จำนวนตั๋วที่ขายได้"])
-
-elif q_num == 10:
-    st.subheader("10. ราคาตั๋วเฉลี่ยและรายได้ต่อลูกค้า (ARPU) แยกตามระดับสมาชิก")
-    sql = f"""
-    SELECT 
-        COALESCE(c.member_tier, 'Non-Member') AS "ระดับสมาชิก",
-        COUNT(DISTINCT t.customer_id) AS "จำนวนลูกค้า",
-        ROUND(AVG(t.final_price), 2) AS "ราคาตั๋วเฉลี่ย (บาท)",
-        ROUND(SUM(t.final_price) / COUNT(DISTINCT t.customer_id), 2) AS "รายได้เฉลี่ยต่อคน (ARPU)"
-    FROM {ticket_table} t
-    LEFT JOIN {customer_table} c ON t.customer_id = c.customer_id
-    GROUP BY 1
-    ORDER BY "รายได้เฉลี่ยต่อคน (ARPU)" DESC
-    """
-    df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-
-elif q_num == 11:
-    st.subheader("11. ความสัมพันธ์ระหว่างความยาวหนัง (Duration) กับยอดขายตั๋ว")
-    sql = f"""
-    SELECT 
-        m.title AS "ชื่อภาพยนตร์",
-        m.duration_min AS "ความยาว (นาที)",
-        COUNT(t.ticket_id) AS "จำนวนตั๋วที่ขายได้",
-        SUM(t.final_price) AS "รายได้รวม (บาท)"
-    FROM {ticket_table} t
-    JOIN {showtime_table} s ON t.showtime_id = s.showtime_id
-    JOIN {movie_table} m ON s.movie_id = m.movie_id
-    GROUP BY 1, 2
-    ORDER BY m.duration_min DESC
-    """
-    df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-
-elif q_num == 12:
-    st.subheader("12. การเปรียบเทียบยอดขายสินค้าหน้าโรง กับ ยอดขายตั๋วภาพยนตร์")
-    sql = f"""
-    SELECT 
-        'Ticket Sales' AS "ประเภทรายได้",
-        SUM(final_price) AS "รายได้รวม (บาท)"
-    FROM {ticket_table}
+        'Ticket Revenue' AS Category, ticket_rev AS 'Revenue (THB)', ROUND(ticket_rev * 100.0 / (ticket_rev + concession_rev), 2) AS 'Percentage (%)' FROM totals
     UNION ALL
     SELECT 
-        'Concession Sales' AS "ประเภทรายได้",
-        SUM(total_price) AS "รายได้รวม (บาท)"
-    FROM {concession_table}
+        'Concession Revenue' AS Category, concession_rev AS 'Revenue (THB)', ROUND(concession_rev * 100.0 / (ticket_rev + concession_rev), 2) AS 'Percentage (%)' FROM totals;
     """
     df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-        if not df.empty:
-            st.bar_chart(df.set_index("ประเภทรายได้")["รายได้รวม (บาท)"])
+    st.dataframe(df, use_container_width=True)
+    st.bar_chart(df.set_index("Category")["Percentage (%)"])
 
-elif q_num == 13:
-    st.subheader("13. การกระจายตัวของเรตติ้งภาพยนตร์ (Rating) และรายได้")
-    sql = f"""
-    SELECT 
-        m.rating AS "เรตติ้งภาพยนตร์",
-        COUNT(DISTINCT m.movie_id) AS "จำนวนเรื่อง",
-        COUNT(t.ticket_id) AS "จำนวนตั๋วที่ขายได้",
-        SUM(t.final_price) AS "รายได้รวม (บาท)"
-    FROM {ticket_table} t
-    JOIN {showtime_table} s ON t.showtime_id = s.showtime_id
-    JOIN {movie_table} m ON s.movie_id = m.movie_id
-    GROUP BY 1
-    ORDER BY "รายได้รวม (บาท)" DESC
-    """
+elif question_option.startswith("5."):
+    st.header("5. ราคาตั๋วเฉลี่ยต่อใบ (Average Ticket Price)")
+    sql = "SELECT AVG(final_price) AS 'ราคาตั๋วเฉลี่ย (บาท/ใบ)' FROM ticket_sales;"
     df = run_query(sql)
-    if df is not None:
-        st.dataframe(df, use_container_width=True)
-
-elif q_num == 14:
-    st.subheader("14. ลูกค้า Top 10 ที่มียอดใช้จ่ายสูงสุดรวมทุกบริการ")
-    sql = f"""
-    WITH customer_tickets AS (
-        SELECT customer_id, SUM(final_price) AS ticket_spend
-        FROM {ticket_table}
-        GROUP BY 1
-    ),
-    customer_concession AS (
-        SELECT customer_id, SUM(total_price) AS concession_spend
-        FROM {concession_table}
-        GROUP BY 1
+    st.metric(
+        "ราคาตั๋วเฉลี่ย (Average Ticket Price)",
+        f"฿{df['ราคาตั๋วเฉลี่ย (บาท/ใบ)'][0]:,.2f}",
     )
-    SELECT 
-        c.customer_id AS "ID ลูกค้า",
-        c.first_name || ' ' || c.last_name AS "ชื่อลูกค้า",
-        c.member_tier AS "ระดับสมาชิก",
-        COALESCE(ct.ticket_spend, 0) AS "ยอดซื้อตั๋ว (บาท)",
-        COALESCE(cc.concession_spend, 0) AS "ยอดซื้อสินค้า (บาท)",
-        (COALESCE(ct.ticket_spend, 0) + COALESCE(cc.concession_spend, 0)) AS "ยอดใช้จ่ายรวม (บาท)"
-    FROM {customer_table} c
-    LEFT JOIN customer_tickets ct ON c.customer_id = ct.customer_id
-    LEFT JOIN customer_concession cc ON c.customer_id = cc.customer_id
-    ORDER BY "ยอดใช้จ่ายรวม (บาท)" DESC
-    LIMIT 10
+    st.dataframe(df, use_container_width=True)
+
+elif question_option.startswith("6."):
+    st.header("6. ภาพยนตร์ทำรายได้รวมสูงสุด 5 อันดับแรก (Top 5 Movies)")
+    sql = """
+    SELECT m.title AS 'ชื่อภาพยนตร์', SUM(t.final_price) AS 'รายได้รวม (บาท)'
+    FROM ticket_sales t
+    JOIN showtimes s ON t.showtime_id = s.showtime_id
+    JOIN movies m ON s.movie_id = m.movie_id
+    GROUP BY m.title ORDER BY 2 DESC LIMIT 5;
     """
     df = run_query(sql)
-    if df is not None:
+    col1, col2 = st.columns([1, 1])
+    with col1:
         st.dataframe(df, use_container_width=True)
+    with col2:
+        st.bar_chart(df.set_index("ชื่อภาพยนตร์")["รายได้รวม (บาท)"])
 
-elif q_num == 15:
-    st.subheader("15. ความสัมพันธ์วันหยุด/วันทำงาน กับการซื้อสินค้าหน้าโรง")
-    sql = f"""
-    WITH parsed_sales AS (
-        SELECT 
-            item_name,
-            total_price,
-            quantity,
-            COALESCE(
-                TRY_STRPTIME(CAST(sale_date AS VARCHAR), '%d/%m/%Y %H:%M'),
-                TRY_STRPTIME(CAST(sale_date AS VARCHAR), '%d/%m/%Y'),
-                TRY_CAST(sale_date AS TIMESTAMP)
-            ) AS clean_date
-        FROM {concession_table}
-    )
+elif question_option.startswith("7."):
+    st.header("7. หมวดหมู่ภาพยนตร์ (Genre) ที่ทำรายได้รวมสูงที่สุด")
+    sql = """
+    SELECT m.genre AS 'หมวดหมู่ภาพยนตร์', SUM(t.final_price) AS 'รายได้รวม (บาท)'
+    FROM ticket_sales t
+    JOIN showtimes s ON t.showtime_id = s.showtime_id
+    JOIN movies m ON s.movie_id = m.movie_id
+    GROUP BY m.genre ORDER BY 2 DESC;
+    """
+    df = run_query(sql)
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.dataframe(df, use_container_width=True)
+    with col2:
+        st.bar_chart(df.set_index("หมวดหมู่ภาพยนตร์")["รายได้รวม (บาท)"])
+
+elif question_option.startswith("8."):
+    st.header("8. รายได้รวมจำแนกตามระดับความเหมาะสม (Rating)")
+    sql = """
+    SELECT m.rating AS 'Rating', SUM(t.final_price) AS 'รายได้รวม (บาท)'
+    FROM ticket_sales t
+    JOIN showtimes s ON t.showtime_id = s.showtime_id
+    JOIN movies m ON s.movie_id = m.movie_id
+    GROUP BY m.rating ORDER BY 2 DESC;
+    """
+    df = run_query(sql)
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.dataframe(df, use_container_width=True)
+    with col2:
+        st.bar_chart(df.set_index("Rating")["รายได้รวม (บาท)"])
+
+elif question_option.startswith("9."):
+    st.header("9. โรงฉายหมายเลขใด (Screen Number) ที่ทำรายได้สูงที่สุด")
+    sql = """
+    SELECT 'Screen ' || s.screen_number AS 'โรงฉาย', SUM(t.final_price) AS 'รายได้รวม (บาท)'
+    FROM ticket_sales t
+    JOIN showtimes s ON t.showtime_id = s.showtime_id
+    GROUP BY s.screen_number ORDER BY 2 DESC;
+    """
+    df = run_query(sql)
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.dataframe(df, use_container_width=True)
+    with col2:
+        st.bar_chart(df.set_index("โรงฉาย")["รายได้รวม (บาท)"])
+
+elif question_option.startswith("10."):
+    st.header("10. ยอด Spending รวมจำแนกตามระดับสมาชิก (Member Tier)")
+    sql = """
+    SELECT 
+        CASE WHEN c.member_tier IS NULL OR c.member_tier = '' THEN 'General (Non-Member)' ELSE c.member_tier END AS 'ระดับสมาชิก',
+        SUM(t.final_price) AS 'ยอดซื้อตั๋วรวม (บาท)'
+    FROM ticket_sales t
+    JOIN customers c ON t.customer_id = c.customer_id
+    GROUP BY 1 ORDER BY 2 DESC;
+    """
+    df = run_query(sql)
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.dataframe(df, use_container_width=True)
+    with col2:
+        st.bar_chart(df.set_index("ระดับสมาชิก")["ยอดซื้อตั๋วรวม (บาท)"])
+
+elif question_option.startswith("11."):
+    st.header("11. ยอดขายตั๋วรวม (Total Tickets) จำแนกตามประเภทสมาชิก")
+    sql = """
+    SELECT 
+        CASE WHEN c.member_tier IS NULL OR c.member_tier = '' THEN 'General (Non-Member)' ELSE c.member_tier END AS 'ระดับสมาชิก',
+        COUNT(t.ticket_id) AS 'จำนวนตั๋ว (ใบ)'
+    FROM ticket_sales t
+    JOIN customers c ON t.customer_id = c.customer_id
+    GROUP BY 1 ORDER BY 2 DESC;
+    """
+    df = run_query(sql)
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.dataframe(df, use_container_width=True)
+    with col2:
+        st.bar_chart(df.set_index("ระดับสมาชิก")["จำนวนตั๋ว (ใบ)"])
+
+elif question_option.startswith("12."):
+    st.header("12. ประเภทที่นั่งที่ลูกค้าระดับ Platinum นิยมซื้อมากที่สุด")
+    sql = """
+    SELECT t.seat_type AS 'ประเภทที่นั่ง', COUNT(t.ticket_id) AS 'จำนวนตั๋วที่ซื้อ (ใบ)'
+    FROM ticket_sales t
+    JOIN customers c ON t.customer_id = c.customer_id
+    WHERE c.member_tier = 'Platinum'
+    GROUP BY t.seat_type ORDER BY 2 DESC;
+    """
+    df = run_query(sql)
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.dataframe(df, use_container_width=True)
+    with col2:
+        st.bar_chart(df.set_index("ประเภทที่นั่ง")["จำนวนตั๋วที่ซื้อ (ใบ)"])
+
+elif question_option.startswith("13."):
+    st.header("13. ประเภทที่นั่ง (Seat Type) ที่สร้างรายได้รวมมากที่สุด")
+    sql = """
+    SELECT seat_type AS 'ประเภทที่นั่ง', SUM(final_price) AS 'รายได้รวม (บาท)'
+    FROM ticket_sales
+    GROUP BY seat_type ORDER BY 2 DESC;
+    """
+    df = run_query(sql)
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.dataframe(df, use_container_width=True)
+    with col2:
+        st.bar_chart(df.set_index("ประเภทที่นั่ง")["รายได้รวม (บาท)"])
+
+elif question_option.startswith("14."):
+    st.header("14. สินค้า Concession ที่นิยมซื้อมากที่สุดของกลุ่ม Gold & Platinum")
+    sql = """
+    SELECT cs.item_name AS 'ชื่อสินค้า Concession', SUM(cs.quantity) AS 'จำนวนชิ้นรวม'
+    FROM concession_sales cs
+    JOIN customers c ON cs.customer_id = c.customer_id
+    WHERE c.member_tier IN ('Gold', 'Platinum')
+    GROUP BY cs.item_name ORDER BY 2 DESC;
+    """
+    df = run_query(sql)
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.dataframe(df, use_container_width=True)
+    with col2:
+        st.bar_chart(df.set_index("ชื่อสินค้า Concession")["จำนวนชิ้นรวม"])
+
+elif question_option.startswith("15."):
+    st.header("15. รายได้รวมจำแนกตามหมวดหมู่สินค้า Concession")
+    sql = """
     SELECT 
         CASE 
-            WHEN DAYNAME(clean_date) IN ('Saturday', 'Sunday') THEN 'Weekend' 
-            ELSE 'Weekday' 
-        END AS "ประเภทวัน",
-        item_name AS "ชื่อสินค้า",
-        SUM(quantity) AS "จำนวน (ชิ้น)",
-        SUM(total_price) AS "ยอดขายรวม (บาท)"
-    FROM parsed_sales
-    GROUP BY 1, 2
-    ORDER BY "ประเภทวัน", "ยอดขายรวม (บาท)" DESC
+            WHEN item_name LIKE '%Popcorn%' THEN 'Popcorn'
+            WHEN item_name LIKE '%Soda%' OR item_name LIKE '%Water%' THEN 'Beverage'
+            WHEN item_name LIKE '%Combo%' THEN 'Combo Set'
+            ELSE 'Other'
+        END AS 'หมวดหมู่ Concession',
+        SUM(total_price) AS 'รายได้รวม (บาท)'
+    FROM concession_sales
+    GROUP BY 1 ORDER BY 2 DESC;
     """
     df = run_query(sql)
-    if df is not None:
+    col1, col2 = st.columns([1, 1])
+    with col1:
         st.dataframe(df, use_container_width=True)
-        if not df.empty:
-            st.bar_chart(df.set_index("ชื่อสินค้า")["ยอดขายรวม (บาท)"])
+    with col2:
+        st.bar_chart(df.set_index("หมวดหมู่ Concession")["รายได้รวม (บาท)"])
