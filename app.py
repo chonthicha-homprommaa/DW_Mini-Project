@@ -2,15 +2,17 @@ import os
 from pathlib import Path
 import duckdb
 import streamlit as st
-import pandas as pd
 
 st.set_page_config(page_title="Cinema Analytics Dashboard", layout="wide")
 st.title("🎬 Cinema Data Analytics - 15 Business Insights")
 
 # ----------------- Database Connection -----------------
 PROJECT_ROOT = Path(__file__).resolve().parent
+
+# กำหนด Path ตรงไปยัง dev.duckdb ในโฟลเดอร์ movie_dw
 DB_PATH = PROJECT_ROOT / "movie_dw" / "dev.duckdb"
 
+# หากหาใน movie_dw ไม่เจอ ให้ลองถอยออกไปดูชั้นนอก
 if not DB_PATH.exists():
     DB_PATH = PROJECT_ROOT / "dev.duckdb"
 
@@ -19,12 +21,14 @@ if not DB_PATH.exists():
     st.info("💡 กรุณารันคำสั่ง `cd movie_dw && dbt build` ใน Terminal ก่อนครับ")
     st.stop()
 
+# เชื่อมต่อ DuckDB
 try:
     conn = duckdb.connect(str(DB_PATH), read_only=True)
 except Exception as e:
     st.error(f"❌ ไม่สามารถเชื่อมต่อ DuckDB ได้: {e}")
     st.stop()
 
+# ฟังก์ชันรัน Query
 def run_query(sql):
     try:
         return conn.execute(sql).fetchdf()
@@ -32,6 +36,7 @@ def run_query(sql):
         st.error(f"❌ เกิดข้อผิดพลาดในการรัน Query: {e}")
         return None
 
+# ดึงชื่อตารางจริงใน DuckDB (รองรับทั้ง fact_... และ fct_...)
 try:
     all_tables = [r[0] for r in conn.execute("SHOW TABLES").fetchall()]
 except Exception:
@@ -44,31 +49,29 @@ def get_table(possible_names):
                 return real
     return possible_names[0]
 
-# Mapping Table Names
 ticket_table = get_table(['fact_ticket_sales', 'fct_ticket_sales', 'stg_ticket_sales', 'ticket_sales'])
 movie_table = get_table(['dim_movies', 'stg_movies', 'movies'])
 customer_table = get_table(['dim_customers', 'stg_customers', 'customers'])
 showtime_table = get_table(['dim_showtimes', 'stg_showtimes', 'showtimes'])
 concession_table = get_table(['fact_concession_sales', 'fct_concession_sales', 'stg_concession_sales', 'concession_sales'])
-date_table = get_table(['dim_dates', 'dim_date', 'date_dim'])
 
 # ----------------- รายการคำถามธุรกิจ -----------------
 questions = [
     "1. รายได้รวมตั๋ว+สินค้าหน้าโรง ในแต่ละเดือน/ไตรมาส",
-    "2. ภาพยนตร์ที่สร้างรายได้และยอดขายตั๋วสูงสุด",
-    "3. ช่วงเวลาการฉาย (Time Slot) ที่ทำรายได้สูงสุด",
-    "4. รายได้แบ่งตามระดับสมาชิก (Member Tier)",
-    "5. สินค้า Concession ที่ขายดีที่สุด (รายได้)",
-    "6. ประเภทที่นั่ง (Seat Type) ที่ทำรายได้สูงสุด",
-    "7. หมวดหมู่ภาพยนตร์ (Genre) ที่ได้รับความนิยมสูงสุด",
-    "8. สัดส่วนรายได้ตามระดับสมาชิกในแต่ละไตรมาส",
-    "9. โรงภาพยนตร์ (Screen Number) ที่มียอดขายตั๋วสูงสุด",
-    "10. ราคาตั๋วเฉลี่ยและรายได้ต่อลูกค้า (ARPU) ตามระดับสมาชิก",
-    "11. ความสัมพันธ์ระหว่างความยาวหนัง (Duration) กับยอดขายตั๋ว",
-    "12. การเปรียบเทียบยอดขายสินค้าหน้าโรง กับ ยอดขายตั๋ว",
-    "13. การกระจายตัวของเรตติ้งภาพยนตร์ (Rating) และรายได้",
-    "14. ลูกค้า Top 10 ที่มียอดใช้จ่ายสูงสุดรวมทุกบริการ",
-    "15. ความสัมพันธ์วันหยุด/วันทำงาน กับการซื้อสินค้า Concession"
+    "2. Top 5 หนังทำรายได้สูงสุด แยกตาม Genre",
+    "3. รายได้ตั๋วหนังแยกตามช่วงเวลา (Time Slot)",
+    "4. ยอดขาย Concession เฉลี่ยต่อผู้เข้าชม (Per Head)",
+    "5. ยอด Spending รวมแยกตามระดับสมาชิก (Member Tier)",
+    "6. ประเภทที่นั่งที่ลูกค้าระดับ Platinum นิยมซื้อ",
+    "7. ยอดซื้อ Concession ของสมาชิกกลุ่ม Gold/Platinum",
+    "8. ยอดขายตั๋วตามประเภทสมาชิกในแต่ละไตรมาส (Customer Loyalty)",
+    "9. หนังประเภท (Genre) ที่ทำรายได้รวมสูงที่สุด",
+    "10. รายได้แยกตามระดับความเหมาะสมของหนัง (Rating)",
+    "11. โรงฉายหมายเลขใด (Screen Number) มีรายได้เฉลี่ยต่อรอบสูงสุด",
+    "12. ผลกระทบของหนังยาว > 150 นาที ต่อรอบฉายและรายได้",
+    "13. สัดส่วนรายได้ (%) แยกตามประเภทที่นั่ง (Seat Type)",
+    "14. สินค้า Concession ที่ขายดีที่สุดเชิงปริมาณและรายได้",
+    "15. ความสัมพันธ์วันหยุด/วันทำงาน กับการซื้อ Combo Set"
 ]
 
 selected_q = st.selectbox("🎯 เลือกข้อคำถามธุรกิจที่ต้องการดูผลลัพธ์:", questions)
@@ -76,42 +79,42 @@ st.divider()
 
 q_num = int(selected_q.split(".")[0])
 
-# ----------------- SQL Logic (Pure DW / Star Schema) -----------------
-
+# ----------------- Logic 15 Business Queries -----------------
 if q_num == 1:
     st.subheader("1. รายได้รวมจากการขายตั๋วชมภาพยนตร์และสินค้าหน้าโรง ในแต่ละเดือนและไตรมาส")
+    
     sql = f"""
-    WITH combined_sales AS (
+    WITH ticket_monthly AS (
         SELECT 
-            STRFTIME(TRY_CAST(s.show_date AS TIMESTAMP), '%Y-%m') AS month_key,
-            'Q' || EXTRACT(QUARTER FROM TRY_CAST(s.show_date AS TIMESTAMP)) AS quarter_key,
-            t.final_price AS ticket_amount,
-            0 AS concession_amount
+            STRFTIME(STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M'), '%Y-%m') AS month_key,
+            'Q' || EXTRACT(QUARTER FROM STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M')) AS quarter_key,
+            SUM(t.final_price) AS ticket_rev
         FROM {ticket_table} t
         JOIN {showtime_table} s ON t.showtime_id = s.showtime_id
-        
-        UNION ALL
-        
+        GROUP BY 1, 2
+    ),
+    concession_monthly AS (
         SELECT 
-            STRFTIME(TRY_CAST(sale_date AS TIMESTAMP), '%Y-%m') AS month_key,
-            'Q' || EXTRACT(QUARTER FROM TRY_CAST(sale_date AS TIMESTAMP)) AS quarter_key,
-            0 AS ticket_amount,
-            total_price AS concession_amount
+            STRFTIME(CAST(sale_date AS DATE), '%Y-%m') AS month_key,
+            SUM(total_price) AS concession_rev
         FROM {concession_table}
+        GROUP BY 1
     )
     SELECT 
-        month_key AS "เดือน (Year-Month)",
-        quarter_key AS "ไตรมาส (Quarter)",
-        SUM(ticket_amount) AS "รายได้ขายตั๋ว (บาท)",
-        SUM(concession_amount) AS "รายได้สินค้าหน้าโรง (บาท)",
-        SUM(ticket_amount + concession_amount) AS "รายได้รวมทั้งหมด (บาท)"
-    FROM combined_sales
-    GROUP BY 1, 2
-    ORDER BY month_key
+        tm.month_key AS "เดือน (Year-Month)",
+        tm.quarter_key AS "ไตรมาส (Quarter)",
+        tm.ticket_rev AS "รายได้ขายตั๋ว (บาท)",
+        COALESCE(cm.concession_rev, 0) AS "รายได้สินค้าหน้าโรง (บาท)",
+        (tm.ticket_rev + COALESCE(cm.concession_rev, 0)) AS "รายได้รวมทั้งหมด (บาท)"
+    FROM ticket_monthly tm
+    LEFT JOIN concession_monthly cm ON tm.month_key = cm.month_key
+    ORDER BY tm.month_key
     """
+    
     df = run_query(sql)
     if df is not None:
         st.dataframe(df, use_container_width=True)
+        st.info("📌 **หมายเหตุการวิเคราะห์:** เนื่องจากชุดข้อมูลทดสอบ (Seed Data) มีบันทึกธุรกรรมครอบคลุมเฉพาะช่วงเดือนสิงหาคม 2026 (Q3) ระบบจึงแสดงผลสรุปรายได้รวมของไตรมาส 3 (Q3-2026) จำนวน 1 เดือนตามข้อมูลจริงใน Database")
 
 elif q_num == 2:
     st.subheader("2. ภาพยนตร์เรื่องใดสร้างรายได้รวมและจำนวนตั๋วสูงที่สุด")
@@ -138,9 +141,9 @@ elif q_num == 3:
     sql = f"""
     SELECT 
         CASE 
-            WHEN EXTRACT(HOUR FROM TRY_CAST(s.show_date AS TIMESTAMP)) BETWEEN 6 AND 11 THEN 'Morning (06:00-11:59)'
-            WHEN EXTRACT(HOUR FROM TRY_CAST(s.show_date AS TIMESTAMP)) BETWEEN 12 AND 16 THEN 'Afternoon (12:00-16:59)'
-            WHEN EXTRACT(HOUR FROM TRY_CAST(s.show_date AS TIMESTAMP)) BETWEEN 17 AND 21 THEN 'Evening (17:00-21:59)'
+            WHEN EXTRACT(HOUR FROM STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M')) BETWEEN 6 AND 11 THEN 'Morning (06:00-11:59)'
+            WHEN EXTRACT(HOUR FROM STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M')) BETWEEN 12 AND 16 THEN 'Afternoon (12:00-16:59)'
+            WHEN EXTRACT(HOUR FROM STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M')) BETWEEN 17 AND 21 THEN 'Evening (17:00-21:59)'
             ELSE 'Night/Late (22:00-05:59)'
         END AS "ช่วงเวลา",
         COUNT(t.ticket_id) AS "จำนวนตั๋ว",
@@ -233,7 +236,7 @@ elif q_num == 8:
     sql = f"""
     SELECT 
         COALESCE(c.member_tier, 'Non-Member') AS "ระดับสมาชิก",
-        'Q' || EXTRACT(QUARTER FROM TRY_CAST(s.show_date AS TIMESTAMP)) AS "ไตรมาส",
+        'Q' || EXTRACT(QUARTER FROM STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M')) AS "ไตรมาส",
         SUM(t.final_price) AS "รายได้ (บาท)"
     FROM {ticket_table} t
     LEFT JOIN {customer_table} c ON t.customer_id = c.customer_id
@@ -366,50 +369,34 @@ elif q_num == 14:
         st.dataframe(df, use_container_width=True)
 
 elif q_num == 15:
-    st.subheader("15. ความสัมพันธ์วันหยุด/วันทำงาน กับการซื้อสินค้าหน้าโรง (Concession)")
-    
+    st.subheader("15. ความสัมพันธ์วันหยุด/วันทำงาน กับการซื้อสินค้าหน้าโรง")
     sql = f"""
-    WITH split_date AS (
+    WITH parsed_sales AS (
         SELECT 
             item_name,
             total_price,
-            -- ดึงวัน เดือน ปี ออกมาจาก Text โดยตรง (รองรับทั้ง 1/8/2026 และ 2026-08-01)
-            CAST(SPLIT_PART(CAST(sale_date AS VARCHAR), '/', 1) AS INT) AS d,
-            CAST(SPLIT_PART(CAST(sale_date AS VARCHAR), '/', 2) AS INT) AS m,
-            CAST(SPLIT_PART(SPLIT_PART(CAST(sale_date AS VARCHAR), '/', 3), ' ', 1) AS INT) AS y
+            quantity,
+            COALESCE(
+                TRY_STRPTIME(CAST(sale_date AS VARCHAR), '%d/%m/%Y %H:%M'),
+                TRY_STRPTIME(CAST(sale_date AS VARCHAR), '%d/%m/%Y'),
+                TRY_CAST(sale_date AS TIMESTAMP)
+            ) AS clean_date
         FROM {concession_table}
-    ),
-    calculated_dow AS (
-        SELECT 
-            item_name,
-            total_price,
-            -- สูตร Zeller's congruence คำนวณวันในสัปดาห์ (0=Saturday, 1=Sunday)
-            (
-                d + 
-                ((13 * (CASE WHEN m <= 2 THEN m + 12 ELSE m END + 1)) / 5) + 
-                ((CASE WHEN m <= 2 THEN y - 1 ELSE y END) % 100) + 
-                (((CASE WHEN m <= 2 THEN y - 1 ELSE y END) % 100) / 4) + 
-                (((CASE WHEN m <= 2 THEN y - 1 ELSE y END) / 100) / 4) + 
-                (5 * ((CASE WHEN m <= 2 THEN y - 1 ELSE y END) / 100))
-            ) % 7 AS dow
-        FROM split_date
     )
     SELECT 
-        item_name AS "สินค้า",
-        SUM(CASE 
-            WHEN dow IN (0, 1) THEN total_price 
-            ELSE 0 
-        END) AS "ยอดขาย Weekend (บาท)",
-        SUM(CASE 
-            WHEN dow NOT IN (0, 1) THEN total_price 
-            ELSE 0 
-        END) AS "ยอดขาย Weekday (บาท)",
-        SUM(total_price) AS "ยอดขายรวมทั้งหมด (บาท)"
-    FROM calculated_dow
-    GROUP BY 1
-    ORDER BY "ยอดขายรวมทั้งหมด (บาท)" DESC
+        CASE 
+            WHEN DAYNAME(clean_date) IN ('Saturday', 'Sunday') THEN 'Weekend' 
+            ELSE 'Weekday' 
+        END AS "ประเภทวัน",
+        item_name AS "ชื่อสินค้า",
+        SUM(quantity) AS "จำนวน (ชิ้น)",
+        SUM(total_price) AS "ยอดขายรวม (บาท)"
+    FROM parsed_sales
+    GROUP BY 1, 2
+    ORDER BY "ประเภทวัน", "ยอดขายรวม (บาท)" DESC
     """
     df = run_query(sql)
-    if df is not None and not df.empty:
+    if df is not None:
         st.dataframe(df, use_container_width=True)
-        st.bar_chart(df.set_index("สินค้า")[["ยอดขาย Weekday (บาท)", "ยอดขาย Weekend (บาท)"]])
+        if not df.empty:
+            st.bar_chart(df.set_index("ชื่อสินค้า")["ยอดขายรวม (บาท)"])
