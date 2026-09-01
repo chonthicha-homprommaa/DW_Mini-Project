@@ -13,58 +13,106 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. Custom CSS styling ---
+# --- 2. Fixed High-Contrast CSS Styling ---
 st.markdown("""
     <style>
-    /* Global background & text */
-    .main {
-        background-color: #0F172A;
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Prompt', sans-serif !important;
+    }
+
+    /* Main App Background */
+    .stApp {
+        background-color: #0B0F17 !important;
+    }
+
+    /* Content Area Typography */
+    .stMainBlockContainer h1, 
+    .stMainBlockContainer h2, 
+    .stMainBlockContainer h3, 
+    .stMainBlockContainer h4, 
+    .stMainBlockContainer h5, 
+    .stMainBlockContainer h6, 
+    .stMainBlockContainer p {
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+    }
+
+    /* Sidebar Styling */
+    section[data-testid="stSidebar"] {
+        background-color: #0F172A !important;
+        border-right: 1px solid #1E293B !important;
+    }
+    section[data-testid="stSidebar"] label, 
+    section[data-testid="stSidebar"] p, 
+    section[data-testid="stSidebar"] span {
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+    }
+    section[data-testid="stSidebar"] h1, 
+    section[data-testid="stSidebar"] h2, 
+    section[data-testid="stSidebar"] h3 {
+        color: #38BDF8 !important;
+    }
+
+    /* Selectbox / Dropdown Styling */
+    div[data-baseweb="select"] * {
+        background-color: #1E293B !important;
+        color: #FFFFFF !important;
+    }
+    div[data-baseweb="popover"] * {
+        background-color: #1E293B !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Tab Styling */
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        padding: 8px 16px;
+        background-color: #1E293B !important;
+        color: #F1F5F9 !important;
+        font-weight: 600 !important;
+        border: 1px solid #334155 !important;
     }
     
+    .stTabs [aria-selected="true"] {
+        background-color: #0284C7 !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        border-color: #38BDF8 !important;
+    }
+
     /* Metric Card Styling */
     div[data-testid="stMetric"] {
-        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-        border: 1px solid #334155;
-        padding: 20px;
-        border-radius: 16px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-        transition: transform 0.2s ease-in-out;
-    }
-    div[data-testid="stMetric"]:hover {
-        transform: translateY(-2px);
-        border-color: #38BDF8;
+        background: #1E293B !important;
+        border: 1px solid #38BDF8 !important;
+        padding: 20px !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
     }
     div[data-testid="stMetric"] label {
-        color: #94A3B8 !important;
-        font-size: 0.9rem !important;
-        font-weight: 600;
-        letter-spacing: 0.5px;
+        color: #38BDF8 !important;
+        font-size: 1rem !important;
+        font-weight: 700 !important;
     }
     div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-        color: #F8FAFC !important;
-        font-size: 2rem !important;
-        font-weight: 800;
+        color: #FFFFFF !important;
+        font-size: 2.2rem !important;
+        font-weight: 800 !important;
+    }
+
+    /* FIX: Custom Dataframe Dark Mode (ป้องกันกล่องขาวโพลน) */
+    div[data-testid="stDataFrame"] {
+        background-color: #1E293B !important;
+        border-radius: 10px;
+        border: 1px solid #334155;
     }
 
     /* Container Spacing */
     .block-container {
         padding-top: 1.8rem;
         padding-bottom: 2rem;
-    }
-
-    /* Tab styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 12px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
-        padding: 8px 16px;
-        background-color: #1E293B;
-        color: #94A3B8;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #0284C7 !important;
-        color: #FFFFFF !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -120,6 +168,24 @@ def run_query(sql):
         st.error(f"SQL Error: {err}")
         return None
 
+def create_chart_layout(fig):
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#FFFFFF", family="Prompt, sans-serif", size=13),
+        title=dict(
+            font=dict(color="#FFFFFF", size=18, family="Prompt, sans-serif")
+        ),
+        legend=dict(
+            font=dict(color="#FFFFFF", size=13, family="Prompt, sans-serif")
+        ),
+        margin=dict(l=20, r=20, t=50, b=20)
+    )
+    fig.update_xaxes(title_font=dict(color='#FFFFFF'), tickfont=dict(color='#E2E8F0'))
+    fig.update_yaxes(title_font=dict(color='#FFFFFF'), tickfont=dict(color='#E2E8F0'))
+    return fig
+
 # --- Header Banner ---
 st.title("🎬 Cinema Data Analytics Platform")
 st.caption("⚡ Interactive Executive Dashboard • Powered by Data Warehouse")
@@ -129,9 +195,9 @@ kpi_df1 = run_query("SELECT SUM(final_price) FROM fact_ticket_sales;")
 kpi_df2 = run_query("SELECT SUM(total_price) FROM fact_concession_sales;")
 kpi_df3 = run_query("SELECT COUNT(ticket_id) FROM fact_ticket_sales;")
 
-ticket_rev = kpi_df1.iloc[0,0] if kpi_df1 is not None else 0
-concess_rev = kpi_df2.iloc[0,0] if kpi_df2 is not None else 0
-total_tickets = kpi_df3.iloc[0,0] if kpi_df3 is not None else 0
+ticket_rev = kpi_df1.iloc[0,0] if kpi_df1 is not None and kpi_df1.iloc[0,0] is not None else 0
+concess_rev = kpi_df2.iloc[0,0] if kpi_df2 is not None and kpi_df2.iloc[0,0] is not None else 0
+total_tickets = kpi_df3.iloc[0,0] if kpi_df3 is not None and kpi_df3.iloc[0,0] is not None else 0
 
 c1, c2, c3, c4 = st.columns(4)
 with c1:
@@ -148,17 +214,6 @@ st.divider()
 # --- Sidebar Controls ---
 st.sidebar.header("🎯 Navigation & Analysis")
 analysis_mode = st.sidebar.radio("มุมมองข้อมูล:", ["📊 Overview Dashboard", "🔎 Deep-Dive Query Analysis"])
-
-# --- Helper Function for Clean Charts ---
-def create_chart_layout(fig):
-    fig.update_layout(
-        template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#94A3B8"),
-        margin=dict(l=20, r=20, t=40, b=20)
-    )
-    return fig
 
 # --- MODE 1: Overview Dashboard ---
 if analysis_mode == "📊 Overview Dashboard":
@@ -264,9 +319,8 @@ else:
         if df is not None and not df.empty:
             if is_metric:
                 val = df.iloc[0, 0]
+                # แสดงแค่ Metric Card สวยๆ ลบตารางสีขาวออก
                 st.metric(metric_label, f"฿{val:,.2f}")
-                st.divider()
-                st.dataframe(df, use_container_width=True)
             else:
                 t1, t2 = st.tabs(["📊 Interactive Chart", "📋 Raw Data Table"])
                 with t1:
