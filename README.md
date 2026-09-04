@@ -141,13 +141,13 @@ Data Warehouse Member G.
 
 📚 [02. Data Dictionary](docs/02_data_dictionary.md) — พจนานุกรมข้อมูลของ Staging, Dimension, และ Fact Tables
 
-❓[03. Business Questions](docs/03_business_questions.md) — โจทย์และคำถามทางธุรกิจ 15 ข้อ
+❓ [03. Business Questions](docs/03_business_questions.md) — โจทย์และคำถามทางธุรกิจ 15 ข้อ
 
 📐 [04. Multidimensional Data Model](docs/04_multidimensional_model.md) — สถาปัตยกรรม Star Schema, Grain, และ Hierarchy
 
- [05. Business Insights](docs/05_business_insights.md) - สรุปผลลัพธ์การวิเคราะห์และข้อเสนอแนะเชิงกลยุทธ์
+📈 [05. Business Insights](docs/05_business_insights.md) - สรุปผลลัพธ์การวิเคราะห์และข้อเสนอแนะเชิงกลยุทธ์
 
-[06. Data Pipeline & Transformations](docs/06_etl_pipeline_and_transformations.md) — กระบวนการ ETL/ELT, Deduplication, และ Data Quality Testing
+🔄 [06. Data Pipeline & Transformations](docs/06_etl_pipeline_and_transformations.md) — กระบวนการ ETL/ELT, Deduplication, และ Data Quality Testing
 
 📊 Business Key Insights (Highlight)
 
