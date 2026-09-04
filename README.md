@@ -148,3 +148,38 @@ Data Warehouse Member G.
 📈 05. Business Insights — สรุปผลลัพธ์การวิเคราะห์และข้อเสนอแนะเชิงกลยุทธ์
 
 🔄 06. Data Pipeline & Transformations — กระบวนการ ETL/ELT, Deduplication, และ Data Quality Testing
+
+📊 Business Key Insights (Highlight)
+
+- Total Revenue: $1,394,430.00 (ยอดขายตั๋วหนัง 78.9% / สินค้า Concession 21.1%)
+
+- Top Performing Movies: Speak No Evil, Twisters, IF, และ Civil War
+
+- Peak Revenue Time Slot: ช่วงเวลา Evening (18:00 - 21:00 น.) สร้างรายได้สูงสุดคิดเป็น 52% ของรายได้ประจำวัน
+
+- Concession Spend Per Head: เฉลี่ย $53.48 ต่อผู้เข้าชม
+
+🚀 How to Run the Project
+
+1. Installation & Environment Setup
+
+# ติดตั้ง Python Packages ทั้งหมดที่จำเป็น
+pip install -r requirements.txt
+
+2. Execute dbt Data Pipeline
+
+cd movie_dw
+
+# ตรวจสอบการเชื่อมต่อกับ DuckDB
+dbt debug
+
+# รันกระบวนการ Transformation ข้อมูล (Staging -> DW)
+dbt run
+
+# รัน Data Quality Tests (Unique, Not Null, Relationships)
+dbt test
+
+3. Run Streamlit Dashboard
+
+# รันแอปพลิเคชัน Analytics Dashboard
+streamlit run app.py
