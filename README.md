@@ -132,3 +132,18 @@ Data Warehouse Member G.
 - Data Transformation Framework: dbt (data build tool) v1.12+
 
 - Data Visualization & Analytics Application: Streamlit (app.py, cinema_dashboard.py)
+
+  📚 Project Documentation (docs/)
+เอกสารการออกแบบระบบ คลังข้อมูล กระบวนการ ETL และผลการวิเคราะห์ถูกจัดเก็บไว้ในโฟลเดอร์ docs/ อย่างครบถ้วน:
+
+📄 01. Operational Database (OLTP) ER Diagram — แผนภาพ ERD ของข้อมูลต้นทาง
+
+📚 02. Data Dictionary — พจนานุกรมข้อมูลของ Staging, Dimension, และ Fact Tables
+
+❓ 03. Business Questions — โจทย์และคำถามทางธุรกิจ 15 ข้อ
+
+📐 04. Multidimensional Data Model — สถาปัตยกรรม Star Schema, Grain, และ Hierarchy
+
+📈 05. Business Insights — สรุปผลลัพธ์การวิเคราะห์และข้อเสนอแนะเชิงกลยุทธ์
+
+🔄 06. Data Pipeline & Transformations — กระบวนการ ETL/ELT, Deduplication, และ Data Quality Testing
