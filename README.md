@@ -185,25 +185,34 @@ dbt test
 
 # รันแอปพลิเคชัน Analytics Dashboard
 streamlit run app.py
-📁 Directory Structure
+## รันแอปพลิเคชัน Analytics Dashboard
+
+```bash
+streamlit run app.py
+```
+
+## Directory Structure
+
+```text
 DW_Mini-Project/
-├── docs/                         # Documentation 01 - 06
+├── docs/                                 # Documentation 01 - 06
 │   ├── 01_OLTP_ER_Diagram.md
 │   ├── 02_data_dictionary.md
 │   ├── 03_business_questions.md
 │   ├── 04_multidimensional_model.md
 │   ├── 05_business_insights.md
 │   └── 06_etl_pipeline_and_transformations.md
-├── movie_dw/                     # dbt Project
-│   ├── datasets/                 # CSV Raw Data Files
+├── movie_dw/                             # dbt Project
+│   ├── datasets/                         # CSV Raw Data Files
 │   ├── models/
-│   │   ├── staging/              # Staging SQL Models & src_movie.yml
-│   │   └── datawarehouse/        # Dim, Fact SQL Models & schema.yml
+│   │   ├── staging/                      # Staging SQL Models & src_movie.yml
+│   │   └── datawarehouse/                # Dim, Fact SQL Models & schema.yml
 │   ├── dbt_project.yml
 │   └── profiles.yml
 ├── sql/
-│   └── analytical_queries.sql    # 15 Analytical Queries
-├── app.py                        # Streamlit Main App
-├── cinema_dashboard.py           # Dashboard Components & Connectors
-├── dev.duckdb                    # DuckDB Database
+│   └── analytical_queries.sql            # 15 Analytical Queries
+├── app.py                                # Streamlit Main App
+├── cinema_dashboard.py                   # Dashboard Components & Connectors
+├── dev.duckdb                            # DuckDB Database
 └── requirements.txt
+```
