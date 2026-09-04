@@ -137,17 +137,17 @@ Data Warehouse Member G.
  📚 Project Documentation (docs/)
 เอกสารการออกแบบระบบ คลังข้อมูล กระบวนการ ETL และผลการวิเคราะห์ถูกจัดเก็บไว้ในโฟลเดอร์ docs/ อย่างครบถ้วน:
 
-📄 01. Operational Database (OLTP) ER Diagram — แผนภาพ ERD ของข้อมูลต้นทาง
+📄 [01. Operational Database (OLTP) ER Diagram](docs/01_OLTP_ER_Diagram.md) — แผนภาพ ERD ของข้อมูลต้นทาง
 
-📚 02. Data Dictionary — พจนานุกรมข้อมูลของ Staging, Dimension, และ Fact Tables
+📚 [02. Data Dictionary](docs/02_data_dictionary.md) — พจนานุกรมข้อมูลของ Staging, Dimension, และ Fact Tables
 
-❓ 03. Business Questions — โจทย์และคำถามทางธุรกิจ 15 ข้อ
+❓[03. Business Questions](docs/03_business_questions.md) — โจทย์และคำถามทางธุรกิจ 15 ข้อ
 
-📐 04. Multidimensional Data Model — สถาปัตยกรรม Star Schema, Grain, และ Hierarchy
+📐 [04. Multidimensional Data Model](docs/04_multidimensional_model.md) — สถาปัตยกรรม Star Schema, Grain, และ Hierarchy
 
-📈 05. Business Insights — สรุปผลลัพธ์การวิเคราะห์และข้อเสนอแนะเชิงกลยุทธ์
+ [05. Business Insights](docs/05_business_insights.md) - สรุปผลลัพธ์การวิเคราะห์และข้อเสนอแนะเชิงกลยุทธ์
 
-🔄 06. Data Pipeline & Transformations — กระบวนการ ETL/ELT, Deduplication, และ Data Quality Testing
+[06. Data Pipeline & Transformations](docs/06_etl_pipeline_and_transformations.md) — กระบวนการ ETL/ELT, Deduplication, และ Data Quality Testing
 
 📊 Business Key Insights (Highlight)
 
