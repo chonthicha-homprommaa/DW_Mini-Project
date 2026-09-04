@@ -116,3 +116,15 @@ Data Warehouse Member G.
     -Popcorn (ป๊อปคอร์นเดี่ยว): 27,040 บาท (คิดเป็น 36.9%)
     -Beverage (เครื่องดื่มเดี่ยว): 11,070 บาท (คิดเป็น 15.1%)
         -รายได้รวม Concession ทั้งหมด: 73,320 บาท
+🎬 Cinema Data Analytics & Data Warehouse Project
+ระบบคลังข้อมูลและแดชบอร์ดวิเคราะห์ธุรกิจโรงภาพยนตร์ (Cinema Data Warehouse) พัฒนาโดยใช้ dbt (data build tool) ร่วมกับ DuckDB และแสดงผลวิเคราะห์ข้อมูลด้วย Streamlit Interactive Dashboard
+
+📌 Executive Summary & Project Overview
+
+โปรเจกต์นี้มีวัตถุประสงค์เพื่อเปลี่ยนถ่ายข้อมูลจากระบบปฏิบัติการ (OLTP) ของโรงภาพยนตร์ เข้าสู่คลังข้อมูล (Data Warehouse) ในรูปแบบ Star Schema เพื่อตอบโจทย์คำถามทางธุรกิจและช่วยการตัดสินใจของผู้บริหาร
+
+- Data Engine & Warehouse: DuckDB (dev.duckdb)
+
+- Data Transformation Framework: dbt (data build tool) v1.12+
+
+- Data Visualization & Analytics Application: Streamlit (app.py, cinema_dashboard.py)
