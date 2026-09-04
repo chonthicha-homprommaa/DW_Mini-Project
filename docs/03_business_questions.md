@@ -19,7 +19,7 @@
 10. สมาชิกระดับต่างๆ (Member Tier: Silver, Gold, Platinum) มียอด Spending รวมต่างกันอย่างไร?
 11. ยอดขายตั๋วรวม (Total Tickets) จำแนกตามประเภทสมาชิก (Member Tier) เป็นอย่างไร?
 12. ลูกค้าระดับ Platinum นิยมซื้อประเภทที่นั่งแบบใดมากที่สุด (Normal, Honeymoon, VIP)?
-13. ประเภทที่นั่งแบบใด (Seat Type: Normal, Honeymoon, VIP) ที่สร้างรายได้รวมให้โรงหนังมากที่สุด?
+13. ประเภทที่นั่งแบบใด (Seat Type Normal, Honeymoon, VIP) ที่สร้างรายได้รวมให้โรงหนังมากที่สุด?
 
 ## 4. ยอดขายสินค้าและบริการ Concession (Concession Performance)
 14. สินค้า Concession ประเภทใดที่เป็นที่นิยมซื้อมากที่สุดของกลุ่มสมาชิกระดับ Gold และ Platinum?
