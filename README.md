@@ -133,7 +133,8 @@ Data Warehouse Member G.
 
 - Data Visualization & Analytics Application: Streamlit (app.py, cinema_dashboard.py)
 
-  📚 Project Documentation (docs/)
+ 
+ 📚 Project Documentation (docs/)
 เอกสารการออกแบบระบบ คลังข้อมูล กระบวนการ ETL และผลการวิเคราะห์ถูกจัดเก็บไว้ในโฟลเดอร์ docs/ อย่างครบถ้วน:
 
 📄 01. Operational Database (OLTP) ER Diagram — แผนภาพ ERD ของข้อมูลต้นทาง
