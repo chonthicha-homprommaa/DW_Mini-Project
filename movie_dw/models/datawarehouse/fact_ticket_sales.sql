@@ -15,8 +15,12 @@ with source as (
         cast(
             coalesce(
                 try_strptime(s.show_date, '%m/%d/%Y %H:%M:%S'),
+                try_strptime(s.show_date, '%m/%d/%Y %H:%M'),
+                try_strptime(s.show_date, '%Y-%m-%d %H:%M:%S'),
+                try_strptime(s.show_date, '%Y-%m-%d %H:%M'),
                 try_strptime(s.show_date, '%Y-%m-%d'),
-                try_strptime(s.show_date, '%m/%d/%Y')
+                try_strptime(s.show_date, '%m/%d/%Y'),
+                try_cast(s.show_date as timestamp)
             ) as date
         ) as show_date,
         current_localtimestamp() as insertion_timestamp
