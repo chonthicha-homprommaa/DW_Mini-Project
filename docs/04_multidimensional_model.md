@@ -50,6 +50,27 @@
 
 ```mermaid
 erDiagram
+    Fact_Ticket_Sales {
+        int Ticket_Sales_Key PK
+        int Date_Key FK
+        int Customer_Key FK
+        int Product_Key FK
+        string Seat_Number
+        string Seat_Type
+        int Ticket_Quantity
+        decimal Ticket_Price
+    }
+
+    Fact_Concession_Sales {
+        int Concession_Sales_Key PK
+        int Date_Key FK
+        int Customer_Key FK
+        int Product_Key FK
+        int Quantity
+        decimal Unit_Price
+        decimal Total_Price
+    }
+
     Dim_Date {
         int Date_Key PK
         date Full_Date
@@ -68,55 +89,19 @@ erDiagram
         string Member_Tier
     }
 
-    Dim_Movie {
-        int Movie_Key PK
-        int Movie_ID
-        string Title
-        string Genre
-        int Duration_Min
-        string Rating
-    }
-
-    Dim_Showtime {
-        int Showtime_Key PK
-        int Showtime_ID
-        int Screen_Number
-        string Time_Slot
-    }
-
-    Dim_Concession_Item {
-        int Item_Key PK
+    Dim_Product {
+        int Product_Key PK
+        string Product_Type
         string Item_Name
-        string Category
+        string Category_Genre
+        string Details_Rating
     }
 
-    Fact_Ticket_Sales {
-        int Ticket_Sales_Key PK
-        int Date_Key FK
-        int Customer_Key FK
-        int Movie_Key FK
-        int Showtime_Key FK
-        string Seat_Number
-        string Seat_Type
-        int Ticket_Quantity
-        decimal Ticket_Price
-    }
+    Dim_Date ||--|{ Fact_Ticket_Sales : "records"
+    Dim_Customer ||--|{ Fact_Ticket_Sales : "buys"
+    Dim_Product ||--|{ Fact_Ticket_Sales : "contains"
 
-    Fact_Concession_Sales {
-        int Concession_Sales_Key PK
-        int Date_Key FK
-        int Customer_Key FK
-        int Item_Key FK
-        int Quantity
-        decimal Unit_Price
-        decimal Total_Price
-    }
-
-    Dim_Date ||--o{ Fact_Ticket_Sales : "records"
-    Dim_Customer ||--o{ Fact_Ticket_Sales : "buys"
-    Dim_Movie ||--o{ Fact_Ticket_Sales : "screened_in"
-    Dim_Showtime ||--o{ Fact_Ticket_Sales : "scheduled_at"
-
-    Dim_Date ||--o{ Fact_Concession_Sales : "records"
-    Dim_Customer ||--o{ Fact_Concession_Sales : "buys"
-    Dim_Concession_Item ||--o{ Fact_Concession_Sales : "contains"
+    Dim_Date ||--|{ Fact_Concession_Sales : "records"
+    Dim_Customer ||--|{ Fact_Concession_Sales : "buys"
+    Dim_Product ||--|{ Fact_Concession_Sales : "contains"
+```
