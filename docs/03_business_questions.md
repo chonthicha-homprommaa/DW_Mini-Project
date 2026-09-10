@@ -96,5 +96,6 @@
 
 ### 15. หมวดหมู่สินค้า Concession (Product Category: Popcorn, Beverage, Combo Set) ใดทำรายได้รวมสูงที่สุด?
 - **Source:** Fact_Concession_Sales
-- **Fact Attribute:** Category
+- **Fact Attribute:** Item_Name
+- **Derived Attribute:** Category (คำนวณจาก Item_Name ใน Analytical Query)
 - **Measure:** SUM(Total_Price)
