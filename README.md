@@ -15,6 +15,7 @@ Data Warehouse Member G.
     
 # 2. ช่วงเวลาใดของวัน (Time Slot: Morning, Afternoon, Evening) ที่สร้างรายได้จากการขายตั๋วมากที่สุด?
 <img width="1282" height="512" alt="image" src="https://github.com/user-attachments/assets/77ea3ce1-3e45-4df3-8116-e794c4f5fb49" />
+
     -Evening (17:00 - 23:59 น.): ทำรายได้สูงสุดอยู่ที่ 683,120 บาท (คิดเป็น 49.0% ของรายได้รวมทั้งหมด)
     
     -Morning (06:00 - 11:59 น.): ทำรายได้ 363,500 บาท (คิดเป็น 26.1%)
