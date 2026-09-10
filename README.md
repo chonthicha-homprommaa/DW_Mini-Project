@@ -5,6 +5,9 @@ Data Warehouse Member G.
 4. 673020268-9 อนัญญา ทองปน
 5. 673020487-7 กนกวรรณ หงษ์โสภา
 
+## 📊 Project Overview (Infographic)
+![Cinema Data Analytics Infographic](images/Cinema_Infographic.png)
+ 
 # 1. รายได้รวมจากการขายตั๋วภาพยนตร์ทั้งหมดเป็นเท่าใด?
 <img width="1332" height="170" alt="image" src="https://github.com/user-attachments/assets/12964eb4-6193-4363-b42b-0d9de5b89e6e" />
     -รายได้รวมจากการขายตั๋ว (Total Ticket Revenue): ทำรายได้รวม 1,394,430.00 บาท จากจำนวนตั๋วภาพยนตร์ที่ขายได้ทั้งหมด
