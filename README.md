@@ -219,13 +219,10 @@ Data Warehouse Member G.
 
 📊 Business Key Insights (Highlight)
 
-- Total Revenue: $1,394,430.00 (ยอดขายตั๋วหนัง 95% / สินค้า Concession 5%)
-
-- Top Performing Movies: Speak No Evil, Twisters, IF, และ Civil War
-
-- Peak Revenue Time Slot: ช่วงเวลา Evening (18:00 - 21:00 น.) สร้างรายได้สูงสุดคิดเป็น 52% ของรายได้ประจำวัน
-
-- Concession Spend Per Head: เฉลี่ย $53.48 ต่อผู้เข้าชม
+- **รายได้รวมจากการขายตั๋ว (Total Ticket Revenue):** ฿1,394,430
+- **สัดส่วนรายได้:** ตั๋วภาพยนตร์ 95% | สินค้า Concession 5%
+- **ช่วงเวลาที่สร้างรายได้สูงสุด (Peak Revenue Time Slot):** ช่วงเช้า (Morning: 06:00–11:59 น.) มีรายได้ ฿363,500
+- **ค่าใช้จ่ายสินค้า Concession เฉลี่ยต่อผู้เข้าชม (Concession Spend Per Head):** ฿13.33 ต่อคน
 
 ## 🚀 How to Run the Project
 
