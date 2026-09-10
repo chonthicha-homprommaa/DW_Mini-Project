@@ -219,7 +219,7 @@ Data Warehouse Member G.
 
 📊 Business Key Insights (Highlight)
 
-- Total Revenue: $1,394,430.00 (ยอดขายตั๋วหนัง 78.9% / สินค้า Concession 21.1%)
+- Total Revenue: $1,394,430.00 (ยอดขายตั๋วหนัง 95% / สินค้า Concession 5%)
 
 - Top Performing Movies: Speak No Evil, Twisters, IF, และ Civil War
 
