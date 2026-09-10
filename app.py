@@ -424,39 +424,49 @@ WITH filtered_ticket AS (
             THEN 'Non-Member'
             ELSE c.member_tier
         END AS member_tier,
-        CASE
-            WHEN EXTRACT(
-                HOUR FROM COALESCE(
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M:%S'),
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M'),
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M:%S'),
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M'),
-                    TRY_CAST(s.show_date AS TIMESTAMP)
-                )
-            ) BETWEEN 6 AND 11 THEN 'Morning'
+               CASE
+    WHEN EXTRACT(HOUR FROM COALESCE(
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M'),
+        TRY_CAST(s.show_date AS TIMESTAMP)
+    )) BETWEEN 0 AND 5 THEN 'Late Night'
 
-            WHEN EXTRACT(
-                HOUR FROM COALESCE(
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M:%S'),
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M'),
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M:%S'),
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M'),
-                    TRY_CAST(s.show_date AS TIMESTAMP)
-                )
-            ) BETWEEN 12 AND 16 THEN 'Afternoon'
+    WHEN EXTRACT(HOUR FROM COALESCE(
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M'),
+        TRY_CAST(s.show_date AS TIMESTAMP)
+    )) BETWEEN 6 AND 11 THEN 'Morning'
 
-            WHEN EXTRACT(
-                HOUR FROM COALESCE(
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M:%S'),
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M'),
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M:%S'),
-                    TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M'),
-                    TRY_CAST(s.show_date AS TIMESTAMP)
-                )
-            ) BETWEEN 17 AND 23 THEN 'Evening'
+    WHEN EXTRACT(HOUR FROM COALESCE(
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M'),
+        TRY_CAST(s.show_date AS TIMESTAMP)
+    )) BETWEEN 12 AND 17 THEN 'Afternoon'
 
-            ELSE 'Unknown'
-        END AS time_slot
+    WHEN EXTRACT(HOUR FROM COALESCE(
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%m/%d/%Y %H:%M'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%d/%m/%Y %H:%M'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M:%S'),
+        TRY_STRPTIME(CAST(s.show_date AS VARCHAR), '%Y-%m-%d %H:%M'),
+        TRY_CAST(s.show_date AS TIMESTAMP)
+    )) BETWEEN 18 AND 23 THEN 'Evening'
+
+    ELSE 'Unknown'
+END AS time_slot
     FROM {FACT_TICKET} t
     LEFT JOIN {DIM_SHOWTIMES} s
         ON t.showtime_id = s.showtime_id

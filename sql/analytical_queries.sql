@@ -16,23 +16,33 @@ FROM fact_ticket_sales;
 -- Q2: ช่วงเวลาใดของวันที่สร้างรายได้จากการขายตั๋วมากที่สุด
 -- =========================================================
 
+-- Q2: ช่วงเวลาใดสร้างรายได้จากการขายตั๋วสูงที่สุด?
+
 SELECT
     CASE
         WHEN EXTRACT(HOUR FROM TRY_CAST(s.show_date AS TIMESTAMP))
+            BETWEEN 0 AND 5 THEN 'Late Night'
+
+        WHEN EXTRACT(HOUR FROM TRY_CAST(s.show_date AS TIMESTAMP))
             BETWEEN 6 AND 11 THEN 'Morning'
+
         WHEN EXTRACT(HOUR FROM TRY_CAST(s.show_date AS TIMESTAMP))
-            BETWEEN 12 AND 16 THEN 'Afternoon'
+            BETWEEN 12 AND 17 THEN 'Afternoon'
+
         WHEN EXTRACT(HOUR FROM TRY_CAST(s.show_date AS TIMESTAMP))
-            BETWEEN 17 AND 23 THEN 'Evening'
+            BETWEEN 18 AND 23 THEN 'Evening'
+
         ELSE 'Unknown'
     END AS time_slot,
-    SUM(t.final_price) AS ticket_revenue
+
+    SUM(t.final_price) AS total_revenue
+
 FROM fact_ticket_sales t
 JOIN dim_showtimes s
     ON t.showtime_id = s.showtime_id
-GROUP BY 1
-ORDER BY ticket_revenue DESC;
 
+GROUP BY time_slot
+ORDER BY total_revenue DESC;
 
 -- =========================================================
 -- Q3: ยอดซื้อ Concession เฉลี่ยต่อผู้เข้าชม 1 คน
