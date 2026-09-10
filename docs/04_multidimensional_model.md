@@ -15,7 +15,7 @@
 * **Hierarchy:** Genre -> Title
 
 ### 2.3 Dim_Showtime (มิติด้านรอบฉาย)
-* **Attributes:** Showtime_Key, Showtime_ID, Screen_Number, Time_Slot (Morning, Afternoon, Evening, Night)
+**Attributes:** Showtime_ID, Movie_ID, Show_Date, Screen_Number, Ticket_Price
 
 ---
 
