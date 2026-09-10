@@ -51,57 +51,58 @@
 ```mermaid
 erDiagram
     Fact_Ticket_Sales {
-        int Ticket_Sales_Key PK
-        int Date_Key FK
-        int Customer_Key FK
-        int Product_Key FK
-        string Seat_Number
-        string Seat_Type
-        int Ticket_Quantity
-        decimal Ticket_Price
+        int ticket_id PK
+        int showtime_id FK
+        int customer_id FK
+        int movie_id FK
+        string seat_number
+        string seat_type
+        decimal final_price
+        date show_date
+        timestamp insertion_timestamp
     }
 
     Fact_Concession_Sales {
-        int Concession_Sales_Key PK
-        int Date_Key FK
-        int Customer_Key FK
-        int Product_Key FK
-        int Quantity
-        decimal Unit_Price
-        decimal Total_Price
+        int concession_sale_id PK
+        int customer_id FK
+        string item_name
+        int quantity
+        decimal unit_price
+        decimal total_price
+        date sale_date
+        timestamp insertion_timestamp
     }
 
-    Dim_Date {
-        int Date_Key PK
-        date Full_Date
-        string Day_Of_Week
-        int Month
-        string Month_Name
-        int Quarter
-        int Year
+    Dim_Customers {
+        int customer_id PK
+        string first_name
+        string last_name
+        string email
+        string member_tier
+        timestamp insertion_timestamp
     }
 
-    Dim_Customer {
-        int Customer_Key PK
-        int Customer_ID
-        string Full_Name
-        string Email
-        string Member_Tier
+    Dim_Movies {
+        int movie_id PK
+        string title
+        string genre
+        int duration_min
+        string rating
+        timestamp insertion_timestamp
     }
 
-    Dim_Product {
-        int Product_Key PK
-        string Product_Type
-        string Item_Name
-        string Category_Genre
-        string Details_Rating
+    Dim_Showtimes {
+        int showtime_id PK
+        int movie_id
+        date show_date
+        int screen_number
+        decimal ticket_price
+        timestamp insertion_timestamp
     }
 
-    Dim_Date ||--|{ Fact_Ticket_Sales : "records"
-    Dim_Customer ||--|{ Fact_Ticket_Sales : "buys"
-    Dim_Product ||--|{ Fact_Ticket_Sales : "contains"
+    Dim_Customers ||--|{ Fact_Ticket_Sales : "buys"
+    Dim_Movies ||--|{ Fact_Ticket_Sales : "screened_in"
+    Dim_Showtimes ||--|{ Fact_Ticket_Sales : "scheduled_at"
 
-    Dim_Date ||--|{ Fact_Concession_Sales : "records"
-    Dim_Customer ||--|{ Fact_Concession_Sales : "buys"
-    Dim_Product ||--|{ Fact_Concession_Sales : "contains"
+    Dim_Customers ||--|{ Fact_Concession_Sales : "buys"
 ```
