@@ -94,15 +94,15 @@ erDiagram
     Dim_Showtimes {
         int showtime_id PK
         int movie_id
-        date show_date
+        timestamp show_date
         int screen_number
         decimal ticket_price
         timestamp insertion_timestamp
     }
 
-    Dim_Customers ||--|{ Fact_Ticket_Sales : "buys"
-    Dim_Movies ||--|{ Fact_Ticket_Sales : "screened_in"
-    Dim_Showtimes ||--|{ Fact_Ticket_Sales : "scheduled_at"
+    Dim_Customers ||--|{ Fact_Ticket_Sales : "purchases"
+    Dim_Movies ||--|{ Fact_Ticket_Sales : "generates"
+    Dim_Showtimes ||--|{ Fact_Ticket_Sales : "records"
 
-    Dim_Customers ||--|{ Fact_Concession_Sales : "buys"
+    Dim_Customers ||--|{ Fact_Concession_Sales : "purchases"
 ```
