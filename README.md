@@ -13,17 +13,19 @@ Data Warehouse Member G.
 
     - รายได้รวมจากการขายตั๋ว (Total Ticket Revenue): ทำรายได้รวม 1,394,430.00 บาท จากจำนวนตั๋วภาพยนตร์ที่ขายได้ทั้งหมด
     
-# 2. ช่วงเวลาใดของวัน (Time Slot: Morning, Afternoon, Evening) ที่สร้างรายได้จากการขายตั๋วมากที่สุด?
-<img width="1282" height="512" alt="image" src="https://github.com/user-attachments/assets/77ea3ce1-3e45-4df3-8116-e794c4f5fb49" />
+# 2. ช่วงเวลาใดของวัน (Time Slot: Late Night, Morning, Afternoon, Evening) ที่สร้างรายได้จากการขายตั๋วมากที่สุด?
+<img width="1340" height="498" alt="image" src="https://github.com/user-attachments/assets/94f0c872-b446-454f-8c42-b7379a87e512" />
 
-    -Evening (17:00 - 23:59 น.): ทำรายได้สูงสุดอยู่ที่ 683,120 บาท (คิดเป็น 49.0% ของรายได้รวมทั้งหมด)
-    
-    -Morning (06:00 - 11:59 น.): ทำรายได้ 363,500 บาท (คิดเป็น 26.1%)
-    
-    -Afternoon (12:00 - 16:59 น.): ทำรายได้ 347,810 บาท (คิดเป็น 24.9%)
-    
-        -รายได้รวมทุกช่วงเวลา: 1,394,430 บาท
-        
+
+| ช่วงเวลา | เวลา | รายได้จากการขายตั๋ว |
+|---|---|---:|
+| Late Night | 00:00–05:59 น. | 353,910 บาท |
+| Morning | 06:00–11:59 น. | **363,500 บาท** |
+| Afternoon | 12:00–17:59 น. | 347,810 บาท |
+| Evening | 18:00–23:59 น. | 329,210 บาท |
+
+> **สรุป:** ช่วง **Morning (06:00–11:59 น.)** สร้างรายได้จากการขายตั๋วสูงที่สุดที่ **363,500 บาท**
+
 # 3. ยอดขายสินค้า Concession รวมคิดเป็นยอดซื้อเฉลี่ยต่อผู้เข้าชม 1 คน (Spend Per Head) เป็นเท่าใด?
 <img width="1346" height="160" alt="image" src="https://github.com/user-attachments/assets/d87790ee-ed7c-473a-9c8a-45ee310238ec" />
 
