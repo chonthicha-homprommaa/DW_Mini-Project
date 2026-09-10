@@ -6,22 +6,15 @@
 
 ## 2. Dimension Tables & Hierarchies (ตารางมิติและระดับชั้น)
 
-### 2.1 Dim_Date (มิติด้านเวลา)
-* **Attributes:** Date_Key, Full_Date, Day_Of_Week, Month, Month_Name, Quarter, Year
-* **Hierarchy:** Year -> Quarter -> Month -> Full_Date
-
-### 2.2 Dim_Customer (มิติด้านลูกค้า)
-* **Attributes:** Customer_Key, Customer_ID, Full_Name, Email, Member_Tier
+### 2.1 Dim_Customer (มิติด้านลูกค้า)
+* **Attributes:** Customer_ID, Customer_ID, Full_Name, Email, Member_Tier
 * **Hierarchy:** Member_Tier -> Customer_ID
 
-### 2.3 Dim_Movie (มิติด้านภาพยนตร์)
-* **Attributes:** Movie_Key, Movie_ID, Title, Genre, Duration_Min, Rating
-* **Hierarchy:** Genre -> Rating -> Title
+### 2.2 Dim_Movie (มิติด้านภาพยนตร์)
+* **Attributes:** Movie_ID, Movie_ID, Title, Genre, Duration_Min, Rating
+* **Hierarchy:** Genre -> Title
 
-### 2.4 Dim_Concession_Item (มิติด้านสินค้า Concession)
-* **Attributes:** Item_Key, Item_Name, Category (Popcorn, Beverage, Combo)
-
-### 2.5 Dim_Showtime (มิติด้านรอบฉาย)
+### 2.3 Dim_Showtime (มิติด้านรอบฉาย)
 * **Attributes:** Showtime_Key, Showtime_ID, Screen_Number, Time_Slot (Morning, Afternoon, Evening, Night)
 
 ---
