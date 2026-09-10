@@ -36,12 +36,12 @@ Data Warehouse Member G.
     
 # 6. ภาพยนตร์เรื่องใดทำรายได้รวมสูงสุด 5 อันดับแรก (Top 5 Movies)?
 <img width="1345" height="538" alt="image" src="https://github.com/user-attachments/assets/c1e05351-13ca-472d-8b44-09998e501646" />
-    -Speak No Evil: 65,420 บาท (อันดับ 1)
-    -Twisters: 64,180 บาท
-    -IF: 61,070 บาท
-    -Civil War: 58,540 บาท
-    -Despicable Me 4: 57,090 บาท
-        -รายได้รวม Top 5: 306,300 บาท
+    - Speak No Evil: 65,420 บาท (อันดับ 1)
+    - Twisters: 64,180 บาท
+    - IF: 61,070 บาท
+    - Civil War: 58,540 บาท
+    - Despicable Me 4: 57,090 บาท
+        - รายได้รวม Top 5: 306,300 บาท
 
 # 7. หมวดหมู่ภาพยนตร์ (Genre) ใดที่ทำรายได้รวมสูงที่สุด?
 <img width="1360" height="560" alt="image" src="https://github.com/user-attachments/assets/db1732de-54c6-4c60-b809-bde85d6ddc41" />
